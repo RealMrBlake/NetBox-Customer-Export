@@ -1,0 +1,7 @@
+<div class="row">
+  {% for cb in field %}
+    <div class="col-md-{{ cols|default:6 }}">
+      <div class="form-check">{{ cb.tag }} <label class="form-check-label" for="{{ cb.id_for_label }}">{{ cb.choice_label }}</label></div>
+    </div>
+  {% empty %}<div class="text-muted">Keine Einträge im Scope.</div>{% endfor %}
+</div>

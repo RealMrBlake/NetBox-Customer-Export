@@ -1,0 +1,23 @@
+[build-system]
+requires = ["setuptools>=64"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "netbox-customer-export"
+version = "0.1.0"
+description = "NetBox-Plugin: Kundendokumentation (PDF/Word) für Standorte, Lokationen, Mandanten und Mandantengruppen"
+readme = "README.md"
+requires-python = ">=3.10"
+license = { text = "Apache-2.0" }
+dependencies = []
+
+[project.optional-dependencies]
+pdf = ["weasyprint>=62"]
+docx = ["python-docx>=1.1", "cairosvg>=2.7"]
+all = ["weasyprint>=62", "python-docx>=1.1", "cairosvg>=2.7"]
+
+[tool.setuptools.packages.find]
+include = ["netbox_customer_export*"]
+
+[tool.setuptools.package-data]
+netbox_customer_export = ["templates/**/*.html"]

@@ -1,0 +1,77 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+<meta charset="utf-8">
+<title>{{ doc.title }}</title>
+<style>
+  :root { --primary: #{{ b.primary_color }}; --accent: #{{ b.accent_color }}; --head-text: #{{ b.header_text_color }}; --label-bg: #{{ b.label_bg_color }}; --stripe: #{{ b.stripe_color }}; }
+  @page { size: A4; margin: 20mm 15mm 20mm 15mm;
+    @bottom-left { content: element(footer); }
+    @bottom-right { content: "Seite " counter(page) " / " counter(pages); font-size: 7pt; color: #777; } }
+  @page cover { @bottom-left { content: none } @bottom-right { content: none } }
+  body { font-family: "{{ b.font_family }}", "Segoe UI", "DejaVu Sans", Arial, sans-serif; font-size: {{ b.font_size }}pt; color: #222; }
+  .cover { page: cover; padding-top: 60mm; page-break-after: always; }
+  .cover img { max-width: 60mm; max-height: 30mm; margin-bottom: 30mm; }
+  .cover h1 { font-size: 30pt; color: var(--primary); margin: 0 0 8pt 0; border: 0; page-break-before: avoid; }
+  .cover .subtitle { font-size: 16pt; color: #555; }
+  .cover .meta { margin-top: 30mm; color: #555; line-height: 1.6; }
+  .toc { page-break-after: always; }
+  .toc a { color: #222; text-decoration: none; }
+  .toc a::after { content: leader(".") target-counter(attr(href), page); }
+  .toc .l2 { padding-left: 14pt; }
+  h1 { color: var(--primary); border-bottom: 2px solid var(--primary); padding-bottom: 3pt; page-break-before: always; }
+  h2 { color: var(--primary); margin-top: 16pt; }
+  h3 { color: var(--accent); }
+  h4 { margin-bottom: 4pt; }
+  h1, h2, h3, h4 { page-break-after: avoid; }
+  table { width: 100%; border-collapse: collapse; margin: 4pt 0 10pt; font-size: 8.5pt; }
+  thead { display: table-header-group; }
+  th { background: var(--primary); color: var(--head-text); text-align: left; padding: 3pt 5pt; }
+  td { border-bottom: 1px solid #ddd; padding: 3pt 5pt; vertical-align: top; }
+  tr { page-break-inside: avoid; }
+  tbody tr:nth-child(even) td { background: var(--stripe); }
+  table.kv { width: auto; min-width: 50%; }
+  table.kv td:first-child { font-weight: 600; background: var(--label-bg); width: 35%; }
+  .images { display: flex; gap: 12mm; justify-content: center; page-break-inside: avoid; }
+  .images figure { margin: 0; text-align: center; }
+  .images img { max-height: 190mm; max-width: 80mm; }
+  figcaption { font-style: italic; color: #555; }
+  .footer { position: running(footer); font-size: 7pt; color: #777; }
+  @media screen { .footer { display: none; } }
+  .pagebreak { page-break-after: always; }
+  @media screen { body { max-width: 1100px; margin: auto; padding: 16px; } }
+{{ b.extra_css|safe }}
+</style>
+</head>
+<body>
+<div class="footer">{{ b.company_name }}{% if b.footer_text %} · {{ b.footer_text }}{% endif %}</div>
+<section class="cover">
+  {% if logo %}<img src="{{ logo }}" alt="">{% endif %}
+  <h1>{{ doc.title }}</h1>
+  {% if doc.subtitle %}<div class="subtitle">{{ doc.subtitle }}</div>{% endif %}
+  <div class="meta">
+    Stand: {{ doc.meta.date }}<br>
+    Erstellt von: {{ doc.meta.author }}<br>
+    {{ b.company_name }}
+  </div>
+</section>
+<nav class="toc">
+  <h2>Inhaltsverzeichnis</h2>
+  {% for h in doc.toc %}<div class="l{{ h.level }}"><a href="#{{ h.anchor }}">{{ h.text }}</a></div>{% endfor %}
+</nav>
+{% for b in doc.blocks %}
+  {% if b.kind == 'heading' %}
+    {% if b.level == 1 %}<h1 id="{{ b.anchor }}">{{ b.text }}</h1>{% elif b.level == 2 %}<h2 id="{{ b.anchor }}">{{ b.text }}</h2>{% elif b.level == 3 %}<h3 id="{{ b.anchor }}">{{ b.text }}</h3>{% else %}<h4 id="{{ b.anchor }}">{{ b.text }}</h4>{% endif %}
+  {% elif b.kind == 'paragraph' %}<p>{{ b.text|linebreaksbr }}</p>
+  {% elif b.kind == 'table' %}
+    <table><thead><tr>{% for h in b.headers %}<th>{{ h }}</th>{% endfor %}</tr></thead>
+    <tbody>{% for row in b.rows %}<tr>{% for c in row %}<td>{{ c }}</td>{% endfor %}</tr>{% endfor %}</tbody></table>
+  {% elif b.kind == 'kv' %}
+    <table class="kv"><tbody>{% for row in b.rows %}<tr><td>{{ row.0 }}</td><td>{{ row.1|linebreaksbr }}</td></tr>{% endfor %}</tbody></table>
+  {% elif b.kind == 'images' %}
+    <div class="images">{% for img in b.images %}<figure><img src="{{ img.data_uri }}" alt="{{ img.caption }}"><figcaption>{{ img.caption }}</figcaption></figure>{% endfor %}</div>
+  {% elif b.kind == 'pagebreak' %}<div class="pagebreak"></div>
+  {% endif %}
+{% endfor %}
+</body>
+</html>

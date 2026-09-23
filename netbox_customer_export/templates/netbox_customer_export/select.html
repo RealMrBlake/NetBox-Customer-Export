@@ -1,0 +1,20 @@
+{% extends 'generic/_base.html' %}
+{% load form_helpers %}
+{% block title %}Kundendokumentation{% endblock %}
+{% block content %}
+<form method="post" class="container-fluid my-3">
+  {% csrf_token %}
+  <div class="card">
+    <h2 class="card-header">Scope wählen</h2>
+    <div class="card-body">
+      <p class="text-muted">Genau eines der Felder ausfüllen.</p>
+      {% if form.non_field_errors %}<div class="alert alert-danger">{{ form.non_field_errors }}</div>{% endif %}
+      {% render_field form.site %}
+      {% render_field form.location %}
+      {% render_field form.tenant %}
+      {% render_field form.tenantgroup %}
+    </div>
+    <div class="card-footer text-end"><button class="btn btn-primary">Weiter</button></div>
+  </div>
+</form>
+{% endblock %}

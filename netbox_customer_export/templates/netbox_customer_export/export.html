@@ -1,0 +1,66 @@
+{% extends 'generic/_base.html' %}
+{% load form_helpers %}
+{% block title %}Kundendoku: {{ object }}{% endblock %}
+{% block subtitle %}<div class="text-muted">{{ scope.label }}</div>{% endblock %}
+{% block content %}
+<form method="post" class="container-fluid my-3">
+  {% csrf_token %}
+  {% if form.errors %}<div class="alert alert-danger">{{ form.errors }}</div>{% endif %}
+  <div class="row">
+    <div class="col-lg-5">
+      <div class="card mb-3">
+        <h2 class="card-header">Dokument</h2>
+        <div class="card-body">
+          {% render_field form.format %}
+          {% render_field form.title %}
+          {% render_field form.subtitle %}
+          {% render_field form.author %}
+          {% if form.branding.field.choices|length > 1 %}{% render_field form.branding %}{% else %}<input type="hidden" name="branding" value="{{ form.branding.field.choices.0.0 }}">{% endif %}
+        </div>
+      </div>
+      <div class="card mb-3">
+        <h2 class="card-header">Inhalte</h2>
+        <div class="card-body">
+          {% for group, sections in section_groups.items %}
+            <h6 class="mt-2">{{ group }}</h6>
+            {% for cb in form.sections %}{% for s in sections %}{% if s.key == cb.data.value %}
+              <div class="form-check">{{ cb.tag }} <label class="form-check-label" for="{{ cb.id_for_label }}">{{ cb.choice_label }}</label></div>
+            {% endif %}{% endfor %}{% endfor %}
+          {% endfor %}
+          <hr>
+          <div class="form-check">{{ form.include_empty }} <label class="form-check-label" for="{{ form.include_empty.id_for_label }}">{{ form.include_empty.label }}</label></div>
+          {% if form.include_secrets %}
+            <div class="form-check">{{ form.include_secrets }} <label class="form-check-label text-danger" for="{{ form.include_secrets.id_for_label }}">{{ form.include_secrets.label }}</label></div>
+          {% endif %}
+        </div>
+      </div>
+    </div>
+    <div class="col-lg-7">
+      <div class="card mb-3">
+        <h2 class="card-header">Geräte</h2>
+        <div class="card-body">
+          <h6>Geräterollen</h6>
+          {% include 'netbox_customer_export/_checkboxes.html' with field=form.roles cols=4 %}
+          <h6 class="mt-3">Spalten</h6>
+          {% include 'netbox_customer_export/_checkboxes.html' with field=form.device_columns cols=4 %}
+          <div class="form-check mt-2">{{ form.group_by_site }} <label class="form-check-label" for="{{ form.group_by_site.id_for_label }}">{{ form.group_by_site.label }}</label></div>
+        </div>
+      </div>
+      <div class="card mb-3">
+        <h2 class="card-header">Racks</h2>
+        <div class="card-body">
+          <div class="form-check">{{ form.rack_svg }} <label class="form-check-label" for="{{ form.rack_svg.id_for_label }}">{{ form.rack_svg.label }}</label></div>
+          <div class="form-check">{{ form.rack_devices }} <label class="form-check-label" for="{{ form.rack_devices.id_for_label }}">{{ form.rack_devices.label }}</label></div>
+          <div class="form-check">{{ form.rack_pagebreak }} <label class="form-check-label" for="{{ form.rack_pagebreak.id_for_label }}">{{ form.rack_pagebreak.label }}</label></div>
+          <h6 class="mt-2">Seiten</h6>
+          {% include 'netbox_customer_export/_checkboxes.html' with field=form.rack_faces cols=6 %}
+        </div>
+      </div>
+    </div>
+  </div>
+  <div class="text-end">
+    <a href="{{ object.get_absolute_url }}" class="btn btn-outline-secondary">Abbrechen</a>
+    <button class="btn btn-primary"><i class="mdi mdi-download"></i> Exportieren</button>
+  </div>
+</form>
+{% endblock %}
