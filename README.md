@@ -21,16 +21,47 @@ Alle Abfragen laufen über die NetBox-Berechtigungen (`.restrict(user, "view")`)
 
 ## Installation
 
+Die Pfade gehen von einer Standardinstallation unter `/opt/netbox` aus.
+
+### 1. Systembibliotheken (für PDF und Rack-Grafiken in Word)
+
 ```bash
-source /opt/netbox/venv/bin/activate
-pip install "netbox-customer-export[all] @ git+https://<dein-git>/NetBox-Customer-Export.git"
-# WeasyPrint/cairosvg benötigen Systembibliotheken:
-sudo apt install libpango-1.0-0 libpangoft2-1.0-0 libcairo2
+sudo apt install -y libpango-1.0-0 libpangoft2-1.0-0 libcairo2 git
 ```
 
-In `local_requirements.txt` eintragen, damit das Plugin NetBox-Upgrades übersteht.
+### 2. Plugin per Git installieren
 
-`configuration.py`:
+```bash
+source /opt/netbox/venv/bin/activate
+pip install "netbox-customer-export[all] @ git+https://git.mrblake.cc/MrBlake/NetBox-Customer-Export.git"
+```
+
+Die Extras regeln, was mitinstalliert wird:
+
+| Extra | Pakete | Formate |
+|---|---|---|
+| `[all]` | weasyprint, python-docx, cairosvg | PDF + Word + HTML |
+| `[pdf]` | weasyprint | PDF + HTML |
+| `[docx]` | python-docx, cairosvg | Word + HTML |
+
+Eine bestimmte Version (Tag oder Commit) installierst du mit `@<tag>` hinter der URL, z.B.
+`git+https://git.mrblake.cc/MrBlake/NetBox-Customer-Export.git@v0.1.0`.
+
+### 3. In `local_requirements.txt` aufnehmen
+
+NetBox' `upgrade.sh` legt das venv bei jedem NetBox-Update neu an. Nur Pakete aus `local_requirements.txt` werden danach
+automatisch wieder installiert. Deshalb das Plugin dort eintragen:
+
+```bash
+echo 'netbox-customer-export[all] @ git+https://git.mrblake.cc/MrBlake/NetBox-Customer-Export.git' \
+  | sudo tee -a /opt/netbox/local_requirements.txt
+```
+
+Soll eine feste Version eingespielt werden, trägst du dort ebenfalls `@<tag>` ein.
+
+### 4. In `configuration.py` aktivieren
+
+`/opt/netbox/netbox/netbox/configuration.py`:
 
 ```python
 PLUGINS = ["netbox_customer_export"]
@@ -49,7 +80,50 @@ PLUGINS_CONFIG = {
 }
 ```
 
-Danach `systemctl restart netbox`.
+### 5. NetBox neu starten
+
+```bash
+sudo systemctl restart netbox netbox-rq
+```
+
+Das Plugin hat weder Datenbankmodelle noch statische Dateien. `migrate` und `collectstatic` sind daher nicht nötig.
+
+## Update
+
+```bash
+source /opt/netbox/venv/bin/activate
+pip install --upgrade --force-reinstall --no-deps \
+  "netbox-customer-export @ git+https://git.mrblake.cc/MrBlake/NetBox-Customer-Export.git"
+sudo systemctl restart netbox netbox-rq
+```
+
+`--force-reinstall` ist nötig, weil pip ein Git-Paket mit unveränderter Versionsnummer sonst nicht neu holt.
+`--no-deps` verhindert, dass dabei auch WeasyPrint & Co. neu installiert werden. Bei einer festen Version in
+`local_requirements.txt` dort den Tag anpassen und denselben Befehl mit `@<neuer-tag>` ausführen.
+
+Installierte Version prüfen:
+
+```bash
+pip show netbox-customer-export
+```
+
+### NetBox-Update
+
+Beim NetBox-Update installiert `sudo /opt/netbox/upgrade.sh` das Plugin automatisch aus `local_requirements.txt` neu.
+Vorher prüfen, ob die Plugin-Version die neue NetBox-Version unterstützt (`min_version`/`max_version`, aktuell 4.6.8 – 4.6.99).
+Andernfalls verweigert NetBox den Start.
+
+## Deinstallation
+
+```bash
+# "netbox_customer_export" aus PLUGINS in configuration.py entfernen, dann:
+source /opt/netbox/venv/bin/activate
+pip uninstall netbox-customer-export
+sudo sed -i '/netbox-customer-export/d' /opt/netbox/local_requirements.txt
+sudo systemctl restart netbox netbox-rq
+```
+
+## Konfiguration
 
 ### Design / Branding
 
