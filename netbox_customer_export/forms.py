@@ -77,6 +77,14 @@ class ExportForm(forms.Form):
     )
     topo_isolated = forms.BooleanField(required=False, initial=False, label="Unverkabelte Geräte anzeigen")
 
+    ip_versions = forms.MultipleChoiceField(
+        choices=(("4", "IPv4"), ("6", "IPv6")),
+        initial=["4", "6"],
+        required=False,
+        widget=forms.CheckboxSelectMultiple,
+        label="IP-Versionen",
+    )
+
     include_empty = forms.BooleanField(required=False, label="Leere Abschnitte trotzdem aufführen")
     include_secrets = forms.BooleanField(required=False, label="Geheimnisse (z.B. WLAN-PSK) mit exportieren")
 

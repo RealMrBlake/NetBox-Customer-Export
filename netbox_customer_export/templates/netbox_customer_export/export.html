@@ -56,6 +56,10 @@
             <input type="hidden" name="branding" value="{{ form.branding.field.choices.0.0 }}">
           {% endif %}
 
+          <div class="ce-label">IP-Versionen</div>
+          {% include 'netbox_customer_export/_pills.html' with field=form.ip_versions %}
+          <div class="form-text mb-2">Gilt für Management-/OOB-IPs, VMs, Topologie, IP-Netze und IP-Adressen.</div>
+
           <div class="ce-label">Optionen</div>
           <label class="ce-switch">{{ form.include_empty }} {{ form.include_empty.label }}</label>
           {% if form.include_secrets %}

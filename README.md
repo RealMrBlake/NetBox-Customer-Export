@@ -12,6 +12,9 @@ Der Techniker wählt vor dem Export aus, welche Inhalte das Dokument enthalten s
 | Netzwerk | VRFs (inkl. RTs), Präfixe nach VRF, VLANs, IP-Adressen (ausführlich), WLANs/SSIDs, Leitungen, **Netzwerk-Topologie** |
 | Verträge & Lizenzen | Lizenzen aus einem Lizenz-Plugin (Standard: `netbox-lifecycle`) |
 
+Über **IP-Versionen** (IPv4, IPv6 oder beides) steuert man, welche Adressen im Dokument erscheinen: Management-/OOB-IPs,
+VMs, Topologie-Beschriftung, IP-Netze und IP-Adressen.
+
 Alle Abfragen laufen über die NetBox-Berechtigungen (`.restrict(user, "view")`). Ein Techniker exportiert also nur, was er auch sehen darf.
 
 ## Aufruf
@@ -223,6 +226,7 @@ Der Abschnitt **Netzwerk-Topologie** zeichnet je Standort ein Diagramm mit Symbo
   Danach geht das Dokument im Hochformat weiter.
 * Provider-Leitungen erscheinen als Wolke, Geräte anderer Standorte gestrichelt (abschaltbar).
 * Beschriftung wählbar: Management-IP, Modell, Ports an den Verbindungen.
+* Gerätenamen über 15 Zeichen (z.B. länger als „poller-thlg-ase“) werden umgebrochen, bevorzugt an `-`, `_`, `.` oder Leerzeichen.
 
 **Symbole** (Menü **Plugins → Topologie-Symbole**, oder Button „Topologie-Symbol“ auf Gerätetyp- und Geräterollen-Seiten):
 

@@ -1,4 +1,5 @@
 """Netzwerk-Topologie: Graph aus den Kabelverbindungen, Ebenen-Layout mit rechtwinkligen Leitungen, PNG-Ausgabe."""
+import re
 from collections import OrderedDict, defaultdict, deque
 from dataclasses import dataclass, field
 from io import BytesIO
@@ -37,12 +38,41 @@ class Graph:
 
 # --- Graph aufbauen -----------------------------------------------------------
 
-def _device_sub(device, details):
+NAME_MAX = 15  # Zeichen je Zeile, z.B. „poller-thlg-ase“; längere Namen werden umgebrochen
+
+
+def wrap_name(name, limit=NAME_MAX):
+    """Namen in Zeilen zu höchstens `limit` Zeichen teilen, bevorzugt nach „-“, „_“, „.“ oder Leerzeichen."""
+    if len(name) <= limit:
+        return [name]
+    lines, cur = [], ""
+    for token in re.findall(r"[^-_. ]+[-_. ]*|[-_. ]+", name):
+        if len((cur + token).rstrip()) <= limit:
+            cur += token
+            continue
+        if cur.strip():
+            lines.append(cur.rstrip())
+        while len(token.rstrip()) > limit:  # Wort ohne Trennzeichen: hart teilen
+            lines.append(token[:limit])
+            token = token[limit:]
+        cur = token
+    if cur.strip():
+        lines.append(cur.rstrip())
+    return lines
+
+
+def _device_sub(device, opts):
+    from .sections import ip_versions
+
+    details = set(opts.get("topo_details") or [])
     sub = []
     if "model" in details:
         sub.append(str(device.device_type.model))
-    if "primary_ip" in details and device.primary_ip:
-        sub.append(str(device.primary_ip.address.ip))
+    if "primary_ip" in details:
+        versions = ip_versions(opts)
+        for ip in (device.primary_ip4, device.primary_ip6):
+            if ip and ip.address.version in versions:
+                sub.append(str(ip.address.ip))
     return sub
 
 
@@ -50,7 +80,6 @@ def build_graphs(scope, opts):
     """Ein Graph je Standort. Geräte anderer Standorte und Provider-Leitungen erscheinen als externe Knoten."""
     from dcim.models import Interface
 
-    details = set(opts.get("topo_details") or [])
     resolver = SymbolResolver()
     devices = list(
         scope.devices().select_related(
@@ -120,7 +149,7 @@ def build_graphs(scope, opts):
         for pk in pks:
             d = by_pk[pk]
             kind, icon = drawn[pk]
-            nodes[f"d{pk}"] = Node(f"d{pk}", d.name or str(d), kind, icon, _device_sub(d, details))
+            nodes[f"d{pk}"] = Node(f"d{pk}", d.name or str(d), kind, icon, _device_sub(d, opts))
         edges = []
         for (a, b), labels in links.items():
             in_a, in_b = a in nodes, b in nodes
@@ -152,8 +181,11 @@ LANE = 11  # Abstand der Sammelschienen im Zwischenraum
 PORT_H = 13  # Zeilenhöhe der Port-Beschriftungen
 
 
+NAME_LINE_H = 15  # Zeilenhöhe des Gerätenamens
+
+
 def _label_h(n):
-    return 20 + 13 * len(n.sub)
+    return 20 + NAME_LINE_H * (len(wrap_name(n.label)) - 1) + 13 * len(n.sub)
 
 
 def _layout(nodes, edges):
@@ -428,12 +460,15 @@ def render_png(graph, show_ports=False, scale=2):
             pic.putalpha(pic.getchannel("A").point(lambda v: int(v * 0.5)))
         img.paste(pic, (int((n.x - ICON / 2) * S), int(n.y * S)), pic)
         ty = (n.y + ICON + 3) * S
-        d.text(
-            (n.x * S, ty), _clip(d, n.label, f_name, (CELL_W - 8) * S),
-            fill=(120, 120, 120) if n.external else (20, 20, 20), font=f_name, anchor="ma",
-        )
+        name_lines = wrap_name(n.label)
+        for i, part in enumerate(name_lines):
+            d.text(
+                (n.x * S, ty + i * NAME_LINE_H * S), _clip(d, part, f_name, (CELL_W - 8) * S),
+                fill=(120, 120, 120) if n.external else (20, 20, 20), font=f_name, anchor="ma",
+            )
+        sub_y = ty + (16 + NAME_LINE_H * (len(name_lines) - 1)) * S
         for i, sub in enumerate(n.sub):
-            d.text((n.x * S, ty + (16 + i * 13) * S), _clip(d, sub, f_sub, (CELL_W - 8) * S), fill=(100, 100, 100), font=f_sub, anchor="ma")
+            d.text((n.x * S, sub_y + i * 13 * S), _clip(d, sub, f_sub, (CELL_W - 8) * S), fill=(100, 100, 100), font=f_sub, anchor="ma")
 
     for text, x, y, anchor in labels:
         tag(text, x, y, anchor)

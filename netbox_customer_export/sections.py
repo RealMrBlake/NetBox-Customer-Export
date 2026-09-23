@@ -35,7 +35,24 @@ def section(key, label, group, default=True, hint=""):
 
 # --- Gerätespalten (vom Techniker wählbar) ------------------------------------
 
-def _rack_pos(d):
+def ip_versions(opts):
+    """Gewählte IP-Versionen als Menge {4, 6}. Ohne Formular (z.B. Vorschau) beide."""
+    versions = opts.get("ip_versions")
+    return {4, 6} if versions is None else {int(v) for v in versions}
+
+
+def ip_text(ips, opts, sep=", "):
+    """IP-Objekte gefiltert nach gewählter Version als Text."""
+    versions = ip_versions(opts)
+    return sep.join(str(ip.address) for ip in ips if ip and ip.address.version in versions) or None
+
+
+def primary_ips(obj, opts, sep=", "):
+    """Primäre IPv4 und/oder IPv6 eines Geräts oder einer VM, je nach Auswahl."""
+    return ip_text([obj.primary_ip4, obj.primary_ip6], opts, sep)
+
+
+def _rack_pos(d, o=None):
     if not d.rack:
         return None
     pos = f" / HE {d.position:g}" if d.position else ""
@@ -44,27 +61,27 @@ def _rack_pos(d):
 
 DEVICE_COLUMNS = OrderedDict(
     [
-        ("name", ("Name", lambda d: d.name or str(d))),
-        ("model", ("Hersteller / Modell", lambda d: f"{d.device_type.manufacturer} {d.device_type.model}")),
-        ("site", ("Standort", lambda d: d.site)),
-        ("location", ("Lokation", lambda d: d.location)),
+        ("name", ("Name", lambda d, o: d.name or str(d))),
+        ("model", ("Hersteller / Modell", lambda d, o: f"{d.device_type.manufacturer} {d.device_type.model}")),
+        ("site", ("Standort", lambda d, o: d.site)),
+        ("location", ("Lokation", lambda d, o: d.location)),
         ("rack", ("Rack / HE", _rack_pos)),
-        ("status", ("Status", lambda d: d.get_status_display())),
-        ("platform", ("Plattform / OS", lambda d: d.platform)),
-        ("primary_ip", ("Management-IP", lambda d: d.primary_ip.address if d.primary_ip else None)),
-        ("oob_ip", ("OOB-IP", lambda d: d.oob_ip.address if d.oob_ip else None)),
-        ("serial", ("Seriennummer", lambda d: d.serial)),
-        ("asset_tag", ("Inventarnr.", lambda d: d.asset_tag)),
-        ("tenant", ("Mandant", lambda d: d.tenant)),
-        ("description", ("Beschreibung", lambda d: d.description)),
+        ("status", ("Status", lambda d, o: d.get_status_display())),
+        ("platform", ("Plattform / OS", lambda d, o: d.platform)),
+        ("primary_ip", ("Management-IP", lambda d, o: primary_ips(d, o))),
+        ("oob_ip", ("OOB-IP", lambda d, o: ip_text([d.oob_ip], o))),
+        ("serial", ("Seriennummer", lambda d, o: d.serial)),
+        ("asset_tag", ("Inventarnr.", lambda d, o: d.asset_tag)),
+        ("tenant", ("Mandant", lambda d, o: d.tenant)),
+        ("description", ("Beschreibung", lambda d, o: d.description)),
     ]
 )
 DEFAULT_DEVICE_COLUMNS = ["name", "model", "location", "rack", "primary_ip", "serial"]
 
 
-def _device_table(devices, columns):
+def _device_table(devices, columns, opts):
     cols = [DEVICE_COLUMNS[c] for c in columns if c in DEVICE_COLUMNS]
-    return T([c[0] for c in cols], [[c[1](d) for c in cols] for d in devices])
+    return T([c[0] for c in cols], [[c[1](d, opts) for c in cols] for d in devices])
 
 
 def _empty(opts, blocks, text="Keine Einträge vorhanden."):
@@ -230,9 +247,9 @@ def devices(scope, opts):
         if opts.get("group_by_site"):
             for site, site_devs in groupby(devs, key=lambda d: d.site):
                 blocks.append(H(3, f"Standort {site}"))
-                blocks.append(_device_table(list(site_devs), columns))
+                blocks.append(_device_table(list(site_devs), columns, opts))
         else:
-            blocks.append(_device_table(devs, columns))
+            blocks.append(_device_table(devs, columns, opts))
     return blocks if found else _empty(opts, blocks)
 
 
@@ -260,7 +277,7 @@ def vms(scope, opts):
     blocks.append(
         T(
             ["Name", "Cluster", "Rolle", "Status", "OS", "vCPU", "RAM (MB)", "Disk (MB)", "IP"],
-            [[vm.name, vm.cluster, vm.role, get(vm, "status"), vm.platform, vm.vcpus, vm.memory, vm.disk, vm.primary_ip.address if vm.primary_ip else None] for vm in qs],
+            [[vm.name, vm.cluster, vm.role, get(vm, "status"), vm.platform, vm.vcpus, vm.memory, vm.disk, primary_ips(vm, opts)] for vm in qs],
         )
     )
     return blocks
@@ -284,6 +301,7 @@ def vrfs(scope, opts):
 @section("prefixes", "IP-Netze", "Netzwerk", hint="Präfixe gruppiert nach VRF")
 def prefixes(scope, opts):
     qs = scope.prefixes().select_related("vrf", "vlan", "role", "tenant").order_by("vrf__name", "prefix")
+    qs = qs.filter(prefix__family__in=ip_versions(opts))
     blocks = [H(1, "IP-Netze")]
     if not qs.exists():
         return _empty(opts, blocks)
@@ -316,6 +334,7 @@ def vlans(scope, opts):
 @section("ips", "IP-Adressen", "Netzwerk", default=False, hint="Ausführlich – kann lang werden")
 def ips(scope, opts):
     qs = scope.ip_addresses().select_related("vrf", "tenant").prefetch_related("assigned_object").order_by("vrf__name", "address")
+    qs = qs.filter(address__family__in=ip_versions(opts))
     blocks = [H(1, "IP-Adressen")]
     if not qs.exists():
         return _empty(opts, blocks)
