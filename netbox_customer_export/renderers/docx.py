@@ -12,7 +12,10 @@ def _svg_to_png(svg):
         import cairosvg
     except (ImportError, OSError):
         return None
-    return cairosvg.svg2png(bytestring=svg.encode("utf-8"), scale=2)
+    try:
+        return cairosvg.svg2png(bytestring=svg.encode("utf-8"), scale=2)
+    except Exception:  # noqa: BLE001 – dann greift das Pillow-PNG
+        return None
 
 
 def _load_template(path):
@@ -153,13 +156,13 @@ def render_docx(doc):
         elif blk.kind == "images":
             t = d.add_table(rows=2, cols=len(blk.images))
             for i, img in enumerate(blk.images):
-                png = _svg_to_png(img["svg"])
+                png = (_svg_to_png(img["svg"]) if img["svg"] else None) or img["png"]
                 cell = t.cell(0, i).paragraphs[0]
                 cell.alignment = WD_ALIGN_PARAGRAPH.CENTER
                 if png:
-                    cell.add_run().add_picture(BytesIO(png), height=Cm(18))
+                    cell.add_run().add_picture(BytesIO(png), width=Cm(7))  # Höhe skaliert mit der Rackgröße
                 else:
-                    cell.add_run("(Rack-Grafik benötigt cairosvg)")
+                    cell.add_run("(Rack-Grafik nicht verfügbar)")
                 cap = t.cell(1, i).paragraphs[0]
                 cap.alignment = WD_ALIGN_PARAGRAPH.CENTER
                 cap.add_run(img["caption"]).italic = True

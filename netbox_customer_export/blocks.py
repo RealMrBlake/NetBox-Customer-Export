@@ -53,11 +53,16 @@ def KV(pairs, skip_empty=True):
 
 
 def IMAGES(images):
-    """images: Liste von (svg_string, caption)."""
+    """images: Liste von (svg_string oder None, caption, png_bytes_oder_None)."""
     out = []
-    for svg, caption in images:
-        data = base64.b64encode(svg.encode("utf-8")).decode("ascii")
-        out.append({"svg": svg, "caption": caption, "data_uri": f"data:image/svg+xml;base64,{data}"})
+    for svg, caption, png in images:
+        if svg:
+            data_uri = "data:image/svg+xml;base64," + base64.b64encode(svg.encode("utf-8")).decode("ascii")
+        elif png:
+            data_uri = "data:image/png;base64," + base64.b64encode(png).decode("ascii")
+        else:
+            continue
+        out.append({"svg": svg, "png": png, "caption": caption, "data_uri": data_uri})
     return Block("images", images=out)
 
 

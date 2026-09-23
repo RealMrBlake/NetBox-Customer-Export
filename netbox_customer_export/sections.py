@@ -8,6 +8,7 @@ from django.contrib.contenttypes.models import ContentType
 from netbox.plugins import get_plugin_config
 
 from .blocks import EMPTY, H, IMAGES, KV, P, PAGEBREAK, T, get
+from .rack_png import render_rack_png
 from .rack_svg import render_rack_svg
 
 
@@ -173,13 +174,23 @@ def racks(scope, opts):
                 )
                 if opts.get("rack_svg"):
                     images, errors = [], []
+                    rack_devs = list(
+                        scope.restrict(rack.devices.all()).select_related("device_type", "role")
+                    )
                     for face in opts.get("rack_faces") or ["front"]:
                         caption = "Vorderseite" if face == "front" else "Rückseite"
-                        svg, error = render_rack_svg(rack, face, scope.user)
-                        if svg:
-                            images.append((svg, caption))
+                        svg, svg_error = render_rack_svg(rack, face, scope.user)
+                        png = None
+                        # PNG wird für Word gebraucht (falls kein cairosvg) und ersetzt ein fehlgeschlagenes SVG
+                        if opts.get("format") == "docx" or not svg:
+                            try:
+                                png = render_rack_png(rack, face, rack_devs)
+                            except Exception as e:  # noqa: BLE001
+                                svg_error = f"{svg_error or ''} / PNG: {type(e).__name__}: {e}".strip(" /")
+                        if svg or png:
+                            images.append((svg, caption, png))
                         else:
-                            errors.append(f"Rack-Ansicht ({caption}) konnte nicht erzeugt werden: {error}")
+                            errors.append(f"Rack-Ansicht ({caption}) konnte nicht erzeugt werden: {svg_error}")
                     if images:
                         blocks.append(IMAGES(images))
                     blocks += [P(e) for e in errors]
