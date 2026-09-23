@@ -72,6 +72,13 @@ class ExportForm(forms.Form):
         widget=forms.CheckboxSelectMultiple,
         label="Beschriftung",
     )
+    topo_scope = forms.MultipleChoiceField(
+        choices=(("site", "Gesamtes Netzwerk (je Standort)"), ("rack", "Je Rack")),
+        initial=["site"],
+        required=False,
+        widget=forms.CheckboxSelectMultiple,
+        label="Umfang",
+    )
     topo_external = forms.BooleanField(
         required=False, initial=True, label="Provider-Leitungen & Geräte außerhalb anzeigen"
     )

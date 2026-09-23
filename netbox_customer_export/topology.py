@@ -76,14 +76,78 @@ def _device_sub(device, opts):
     return sub
 
 
-def build_graphs(scope, opts):
-    """Ein Graph je Standort. Geräte anderer Standorte und Provider-Leitungen erscheinen als externe Knoten."""
+def build_graphs(scope, opts, per="site"):
+    """Ein Graph je Standort (per="site") oder je Rack (per="rack").
+
+    Verbundene Geräte außerhalb der Gruppe (anderer Standort/anderes Rack) und Provider-Leitungen erscheinen
+    als externe, gestrichelte Knoten – so sieht man auch in der Rack-Ansicht, wohin die Uplinks gehen.
+    """
+    cache = getattr(scope, "_topology_cache", None)
+    if cache is None:
+        cache = scope._topology_cache = _collect(scope, opts)
+    by_pk, drawn, links, external = cache
+
+    groups = OrderedDict()
+    for pk in drawn:
+        d = by_pk[pk]
+        key = d.site if per == "site" else d.rack
+        if key is not None:
+            groups.setdefault(key, []).append(pk)
+    if per == "rack":
+        groups = OrderedDict(
+            sorted(groups.items(), key=lambda kv: (str(kv[0].site), str(kv[0].location or ""), kv[0].name))
+        )
+
+    def context(d):
+        """Untertitel eines externen Geräts: wo es steht."""
+        if per == "rack":
+            return [f"Rack {d.rack}" if d.rack else str(d.site)]
+        return [str(d.site)]
+
+    graphs = []
+    for group, pks in groups.items():
+        nodes = OrderedDict()
+        for pk in pks:
+            d = by_pk[pk]
+            kind, icon = drawn[pk]
+            nodes[f"d{pk}"] = Node(f"d{pk}", d.name or str(d), kind, icon, _device_sub(d, opts))
+        members = set(nodes)  # nur Geräte der Gruppe – externe Nachbarn ziehen keine weiteren Nachbarn nach
+        edges = []
+        for (a, b), labels in links.items():
+            in_a, in_b = a in members, b in members
+            if not (in_a or in_b):
+                continue
+            for nid, inside in ((a, in_a), (b, in_b)):
+                if not inside:
+                    other = external.get(nid)
+                    if other is None:  # Gerät im selben Scope, aber anderer Standort / anderes Rack
+                        d = by_pk[int(nid[1:])]
+                        kind, icon = drawn[d.pk]
+                        other = Node(nid, d.name or str(d), kind, icon, context(d), external=True)
+                    nodes[nid] = Node(**{**other.__dict__})
+            edges.append(Edge(a, b, labels))
+        if not opts.get("topo_isolated"):
+            linked = {n for e in edges for n in (e.a, e.b)}
+            nodes = OrderedDict((k, v) for k, v in nodes.items() if k in linked)
+        if nodes:
+            _layout(nodes, edges)
+            if per == "site":
+                title = f"Standort {group}"
+            else:
+                where = " / ".join(str(x) for x in (group.site, group.location) if x)
+                title = f"Rack {group.name} ({where})"
+            graphs.append(Graph(title, nodes, edges))
+    return graphs
+
+
+def _collect(scope, opts):
+    """Geräte, Symbole und Verbindungen (Kabelpfade) des Scopes einmalig einlesen."""
     from dcim.models import Interface
 
     resolver = SymbolResolver()
     devices = list(
         scope.devices().select_related(
-            "role", "device_type__manufacturer", "site", "primary_ip4", "primary_ip6"
+            "role", "device_type__manufacturer", "site", "rack__site", "rack__location", "primary_ip4", "primary_ip6"
         ).order_by("site__name", "name")
     )
     drawn = {}  # device.pk -> (kind, icon)
@@ -139,38 +203,7 @@ def build_graphs(scope, opts):
             if label not in links[key]:
                 links[key].append(label)
 
-    # Knoten je Standort
-    graphs = []
-    sites = OrderedDict()
-    for pk in drawn:
-        sites.setdefault(by_pk[pk].site, []).append(pk)
-    for site, pks in sites.items():
-        nodes = OrderedDict()
-        for pk in pks:
-            d = by_pk[pk]
-            kind, icon = drawn[pk]
-            nodes[f"d{pk}"] = Node(f"d{pk}", d.name or str(d), kind, icon, _device_sub(d, opts))
-        edges = []
-        for (a, b), labels in links.items():
-            in_a, in_b = a in nodes, b in nodes
-            if not (in_a or in_b):
-                continue
-            for nid, inside in ((a, in_a), (b, in_b)):
-                if not inside:
-                    other = external.get(nid)
-                    if other is None:  # Gerät eines anderen Standorts im selben Scope
-                        d = by_pk[int(nid[1:])]
-                        kind, icon = drawn[d.pk]
-                        other = Node(nid, d.name or str(d), kind, icon, [str(d.site)], external=True)
-                    nodes[nid] = Node(**{**other.__dict__})
-            edges.append(Edge(a, b, labels))
-        if not opts.get("topo_isolated"):
-            linked = {n for e in edges for n in (e.a, e.b)}
-            nodes = OrderedDict((k, v) for k, v in nodes.items() if k in linked)
-        if nodes:
-            _layout(nodes, edges)
-            graphs.append(Graph(f"Standort {site}", nodes, edges))
-    return graphs
+    return by_pk, drawn, links, external
 
 
 # --- Layout -------------------------------------------------------------------

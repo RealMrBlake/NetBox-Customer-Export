@@ -432,12 +432,19 @@ def topology(scope, opts):
     from .topology import build_graphs, render_png
 
     title = H(1, "Netzwerk-Topologie")
-    graphs = build_graphs(scope, opts)
-    if not graphs:
-        return _empty(opts, [title], "Keine verkabelten Geräte gefunden.")
+    scopes = opts.get("topo_scope") or ["site"]
     ports = "ports" in (opts.get("topo_details") or [])
-    # Je Standort eine Querformat-Seite; die Abschnittsüberschrift steht mit auf der ersten
+    pages = []  # (Überschriften, Graph) – je eine Querformat-Seite
+    if "site" in scopes:
+        pages += [([H(2, g.title)], g) for g in build_graphs(scope, opts, per="site")]
+    if "rack" in scopes:
+        racks = build_graphs(scope, opts, per="rack")
+        # Rack-Seiten unter einer gemeinsamen Zwischenüberschrift, Racks selbst eine Ebene tiefer (kürzeres Inhaltsverzeichnis)
+        pages += [(([H(2, "Topologie je Rack")] if i == 0 else []) + [H(3, g.title)], g) for i, g in enumerate(racks)]
+    if not pages:
+        return _empty(opts, [title], "Keine verkabelten Geräte gefunden.")
+    # Die Abschnittsüberschrift steht mit auf der ersten Seite
     return [
-        LANDSCAPE(([title] if i == 0 else []) + [H(2, g.title)], render_png(g, show_ports=ports))
-        for i, g in enumerate(graphs)
+        LANDSCAPE(([title] if i == 0 else []) + headings, render_png(g, show_ports=ports))
+        for i, (headings, g) in enumerate(pages)
     ]
