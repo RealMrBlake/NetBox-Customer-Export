@@ -42,12 +42,11 @@
             {% for value, label in form.format.field.choices %}
               <input type="radio" class="btn-check" name="format" id="fmt-{{ value }}" value="{{ value }}" autocomplete="off"{% if form.format.value == value %} checked{% endif %}>
               <label class="btn btn-outline-primary" for="fmt-{{ value }}">
-                {% if value == 'pdf' %}<i class="mdi mdi-file-pdf-box"></i>{% elif value == 'docx' %}<i class="mdi mdi-file-word-box"></i>{% elif value == 'drawio' %}<i class="mdi mdi-sitemap"></i>{% else %}<i class="mdi mdi-web"></i>{% endif %}
+                {% if value == 'pdf' %}<i class="mdi mdi-file-pdf-box"></i>{% elif value == 'docx' %}<i class="mdi mdi-file-word-box"></i>{% else %}<i class="mdi mdi-web"></i>{% endif %}
                 {{ label }}
               </label>
             {% endfor %}
           </div>
-          <div class="form-text mt-n2 mb-3" id="ce-drawio-hint" hidden>draw.io exportiert nur die Topologie als bearbeitbares Diagramm (Optionen unten bei „Topologie“).</div>
           <div class="mb-3"><label class="form-label" for="{{ form.title.id_for_label }}">Titel</label>{{ form.title }}</div>
           <div class="mb-3"><label class="form-label" for="{{ form.subtitle.id_for_label }}">Untertitel</label>{{ form.subtitle }}</div>
           <div class="mb-3"><label class="form-label" for="{{ form.author.id_for_label }}">Erstellt von</label>{{ form.author }}<div class="form-text">Leer = dein Benutzername</div></div>
@@ -156,15 +155,10 @@
     });
     // Detailkarten ausgrauen, wenn der zugehörige Abschnitt abgewählt ist
     function sync() {
-      var fmt = document.querySelector('input[name=format]:checked');
-      var drawio = fmt && fmt.value === 'drawio';
       document.querySelectorAll('[data-ce-depends]').forEach(function (card) {
         var cb = document.querySelector('input[name=sections][value="' + card.dataset.ceDepends + '"]');
-        // draw.io nutzt nur die Topologie-Optionen
-        var active = drawio ? card.dataset.ceDepends === 'topology' : (!cb || cb.checked);
-        card.classList.toggle('ce-dim', !active);
+        card.classList.toggle('ce-dim', !!cb && !cb.checked);
       });
-      document.getElementById('ce-drawio-hint').hidden = !drawio;
     }
     document.addEventListener('change', sync);
     sync();

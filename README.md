@@ -19,7 +19,7 @@ Alle Abfragen laufen über die NetBox-Berechtigungen (`.restrict(user, "view")`)
 * Button **„Kundendoku“** auf Standort-, Lokations-, Mandanten- und Mandantengruppen-Seiten
 * oder Menü **Plugins → Kundendokumentation**
 
-Formate: **PDF**, **Word**, **HTML-Vorschau** (öffnet in neuem Tab) und **draw.io** (nur Topologie, editierbar).
+Formate: **PDF**, **Word** und **HTML-Vorschau** (öffnet in neuem Tab).
 
 ## Installation
 
@@ -216,18 +216,23 @@ Der Abschnitt **Netzwerk-Topologie** zeichnet je Standort ein Diagramm mit Symbo
 
 * Verbindungen stammen aus den **Kabelpfaden** in NetBox. Pfade über Patchpanels werden bis zum Endgerät verfolgt.
 * Die Anordnung von oben nach unten ergibt sich aus der Verkabelung: Provider → Firewall/Router → Core → Access → Endgeräte.
-  Mehrfach-Uplinks werden als „2×“ markiert.
+  Die Reihenfolge innerhalb einer Ebene wird so optimiert, dass sich möglichst wenige Leitungen kreuzen.
+* Leitungen werden **rechtwinklig** über eigene Sammelschienen geführt, farbig je übergeordnetem Gerät. Portnamen stehen
+  direkt am Zielgerät, Mehrfach-Uplinks werden dicker gezeichnet und als „2×“ markiert.
 * Provider-Leitungen erscheinen als Wolke, Geräte anderer Standorte gestrichelt (abschaltbar).
 * Beschriftung wählbar: Management-IP, Modell, Ports an den Verbindungen.
-* Mit dem Format **draw.io** wird die Topologie als editierbare `.drawio`-Datei exportiert, eine Seite je Standort.
 
 **Symbole** (Menü **Plugins → Topologie-Symbole**, oder Button „Topologie-Symbol“ auf Gerätetyp- und Geräterollen-Seiten):
 
 1. Zuordnung je **Gerätetyp**: eingebautes Symbol wählen oder **eigenes Icon hochladen** (PNG/JPG, idealerweise transparent)
 2. Zuordnung je **Geräterolle**
-3. sonst **automatisch** anhand von Rolle, Modell und Hersteller (z.B. „Switch“, „Sophos“, „Access Point“, „Core“)
+3. sonst **automatisch**, zuerst anhand der Rolle, dann anhand von Modell und Hersteller
 
-Patchpanels, Steckdosenleisten, PDUs und USVs werden automatisch ausgeblendet. Über „In Topologie ausblenden“ lassen sich
+Eingebaute Symbole: Internet/Provider, Modem/NTU/RAD, Firewall, Router, Layer-3-Switch, Switch, Funkstrecke,
+WLAN-Controller, PoE-Injektor, Access Point, Server, Storage/SAN (MSA), NAS, Bandlaufwerk/Tape Library, USV/ATS,
+Telefonanlage, IP-Telefon, PC/Client, Drucker, Kamera und „Sonstiges“.
+
+Patchpanels, Steckdosen(leisten), PDUs, Kabelmanagement und Räume werden automatisch ausgeblendet. Über „In Topologie ausblenden“ lassen sich
 weitere Gerätetypen oder Rollen ausblenden. Eigene Icons liegen unter `MEDIA_ROOT/customer-export/symbols/`.
 Berechtigungen: Objekttyp *Customer Export | Topologie-Symbol*, analog zu den Branding-Profilen.
 

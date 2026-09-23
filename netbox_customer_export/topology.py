@@ -1,13 +1,11 @@
-"""Netzwerk-Topologie: Graph aus den Kabelverbindungen, Ebenen-Layout, PNG- und draw.io-Ausgabe."""
-import base64
+"""Netzwerk-Topologie: Graph aus den Kabelverbindungen, Ebenen-Layout mit rechtwinkligen Leitungen, PNG-Ausgabe."""
 from collections import OrderedDict, defaultdict, deque
 from dataclasses import dataclass, field
 from io import BytesIO
-from xml.sax.saxutils import escape, quoteattr
 
-from .symbols import KINDS, SIZE, SymbolResolver, builtin_icon
+from .symbols import KINDS, SymbolResolver, builtin_icon
 
-MAX_PER_ROW = 8
+MAX_PER_ROW = 12  # breitere Zeilen werden umgebrochen
 
 
 @dataclass
@@ -18,9 +16,9 @@ class Node:
     icon: bytes
     sub: list = field(default_factory=list)
     external: bool = False  # Gerät eines anderen Standorts / Provider
-    layer: int = 0
-    x: float = 0
-    y: float = 0
+    row: int = 0  # Zeile im Diagramm (nach Umbruch)
+    x: float = 0  # Mitte, in Layout-Pixeln
+    y: float = 0  # Oberkante des Symbols, wird beim Zeichnen gesetzt
 
 
 @dataclass
@@ -148,8 +146,23 @@ def build_graphs(scope, opts):
 
 # --- Layout -------------------------------------------------------------------
 
+CELL_W = 190  # Spaltenbreite
+ICON = 64  # Symbolgröße
+LANE = 11  # Abstand der Sammelschienen im Zwischenraum
+PORT_H = 13  # Zeilenhöhe der Port-Beschriftungen
+
+
+def _label_h(n):
+    return 20 + 13 * len(n.sub)
+
+
 def _layout(nodes, edges):
-    """Ebenen per Breitensuche ab den „höchsten“ Geräten (Provider, Firewall, Router …), dann Reihenfolge nach Nachbarn."""
+    """Ebenen per Breitensuche ab den „höchsten“ Geräten (Provider, Firewall, Router …).
+
+    Die Breitensuche garantiert, dass verbundene Geräte höchstens eine Ebene auseinanderliegen – so bleiben
+    alle Leitungen kurz. Danach wird die Reihenfolge in mehreren Durchläufen (abwärts/aufwärts) nach dem
+    Schwerpunkt der Nachbarn sortiert, um Kreuzungen zu minimieren.
+    """
     adj = defaultdict(set)
     for e in edges:
         adj[e.a].add(e.b)
@@ -159,64 +172,84 @@ def _layout(nodes, edges):
     layer = {n: None for n in nodes if not adj[n]}  # isolierte Knoten: unterste Zeile
     remaining = set(nodes) - set(layer)
     while remaining:
-        # jede Zusammenhangskomponente ab ihren am höchsten eingestuften Knoten
         top = min(tier[n] for n in remaining)
-        roots = [n for n in nodes if n in remaining and tier[n] == top]
         queue = deque()
-        for r in roots:
-            layer[r] = tier[r] if tier[r] <= 1 else 0
+        for r in [n for n in nodes if n in remaining and tier[n] == top]:
+            layer[r] = 0
             queue.append(r)
         while queue:
             cur = queue.popleft()
             remaining.discard(cur)
             for nb in adj[cur]:
                 if nb not in layer:
-                    layer[nb] = layer[cur] + 1  # Ebene folgt der Verkabelung
+                    layer[nb] = layer[cur] + 1
                     queue.append(nb)
 
     used = sorted({v for v in layer.values() if v is not None})
     rank = {v: i for i, v in enumerate(used)}
-    bottom = len(used)
-    rows = defaultdict(list)
+    order = defaultdict(list)
     for nid in nodes:
-        rows[rank[layer[nid]] if layer[nid] is not None else bottom].append(nid)
+        order[rank[layer[nid]] if layer[nid] is not None else len(used)].append(nid)
+    rows = sorted(order)
 
-    # Reihenfolge: Schwerpunkt der Nachbarn in der Zeile darüber (reduziert Kreuzungen)
-    pos = {}
-    for r in sorted(rows):
-        row = rows[r]
-        if r > 0:
-            def bary(n):
-                ps = [pos[p] for p in adj[n] if p in pos]
-                return sum(ps) / len(ps) if ps else 1e9
-            row.sort(key=bary)
-        for i, n in enumerate(row):
-            pos[n] = i
+    def centered(r):
+        row = order[r]
+        return {n: i - (len(row) - 1) / 2 for i, n in enumerate(row)}
 
-    # Zeilen mit zu vielen Knoten umbrechen, dann Koordinaten
-    CELL_W, CELL_H = 200, 190
+    def sweep(r, ref):
+        if ref not in order:
+            return
+        pos, cur = centered(ref), centered(r)
+
+        def key(n):
+            ps = [pos[p] for p in adj[n] if p in pos]
+            return sum(ps) / len(ps) if ps else cur[n]
+
+        order[r].sort(key=key)
+
+    for _ in range(4):
+        for r in rows[1:]:
+            sweep(r, r - 1)
+        for r in reversed(rows[:-1]):
+            sweep(r, r + 1)
+
+    # Zeilen umbrechen und Spalten vergeben
     lines = []
-    for r in sorted(rows):
-        row = rows[r]
+    for r in rows:
+        row = order[r]
         for i in range(0, len(row), MAX_PER_ROW):
             lines.append(row[i : i + MAX_PER_ROW])
     width = max(len(line) for line in lines) * CELL_W
     for li, line in enumerate(lines):
         offset = (width - len(line) * CELL_W) / 2
         for i, nid in enumerate(line):
+            nodes[nid].row = li
             nodes[nid].x = offset + i * CELL_W + CELL_W / 2
-            nodes[nid].y = li * CELL_H + 70
 
 
 def _oriented(graph, e):
-    """Port-Beschriftungen aus Sicht des oberen Knotens („Uplink-Port – Downlink-Port“)."""
+    """Port-Beschriftungen aus Sicht des oberen (bzw. linken) Knotens: „Uplink-Port – Downlink-Port“."""
     a, b = graph.nodes[e.a], graph.nodes[e.b]
-    if a.y <= b.y:
+    if (a.row, a.x) <= (b.row, b.x):
         return e.labels
     return [" – ".join(reversed(x.split(" – "))) for x in e.labels]
 
 
+def _edge_text(graph, e, show_ports):
+    if show_ports:
+        labels = _oriented(graph, e)
+        return labels[0] + (f" (+{len(labels) - 1})" if len(labels) > 1 else "")
+    return f"{len(e.labels)}×" if len(e.labels) > 1 else None
+
+
 # --- PNG ----------------------------------------------------------------------
+
+PALETTE = [
+    (31, 119, 180), (214, 39, 40), (44, 160, 44), (148, 103, 189), (255, 127, 14),
+    (23, 150, 170), (140, 86, 75), (188, 150, 20), (200, 80, 160), (90, 90, 90),
+]
+EXTERNAL = (160, 160, 160)
+
 
 def _font(size, bold=False):
     from PIL import ImageFont
@@ -233,64 +266,177 @@ def _font(size, bold=False):
         return ImageFont.load_default()
 
 
+def _plan(graph, show_ports):
+    """Ordnet jede Verbindung einem Zwischenraum und einer Sammelschiene zu und berechnet die Zeilenhöhen."""
+    nodes = graph.nodes
+    rows = defaultdict(list)
+    for n in nodes.values():
+        rows[n.row].append(n)
+    n_rows = max(rows) + 1
+
+    down = defaultdict(lambda: defaultdict(list))  # Zwischenraum über Zeile r -> oberer Knoten -> [(Kind, Kante)]
+    same = defaultdict(list)  # Zeile -> Kanten innerhalb der Zeile, nicht benachbart
+    direct = []  # benachbarte Knoten derselben Zeile: gerade Linie
+    for e in graph.edges:
+        a, b = nodes[e.a], nodes[e.b]
+        if a.row == b.row:
+            (direct if abs(a.x - b.x) <= CELL_W + 1 else same[a.row]).append(e)
+        else:
+            up, lo = (a, b) if a.row < b.row else (b, a)
+            down[lo.row][up.id].append((lo, e))
+
+    gaps = {}
+    for r in range(n_rows):
+        items = []
+        for uid, lst in down[r].items():
+            xs = [nodes[uid].x] + [c.x for c, _ in lst]
+            items.append((min(xs), max(xs), ("d", uid)))
+        for i, e in enumerate(same[r]):
+            xs = [nodes[e.a].x, nodes[e.b].x]
+            items.append((min(xs), max(xs), ("s", i)))
+        # Intervall-Färbung: überlappende Schienen bekommen verschiedene Höhen
+        lane_end, lane_of = [], {}
+        for xmin, xmax, key in sorted(items):
+            for li, end in enumerate(lane_end):
+                if end < xmin - 14:
+                    lane_end[li], lane_of[key] = xmax, li
+                    break
+            else:
+                lane_of[key] = len(lane_end)
+                lane_end.append(xmax)
+        parents = defaultdict(list)
+        for uid, lst in down[r].items():
+            for c, e in lst:
+                parents[c.id].append(uid)
+        for c in parents:
+            parents[c].sort(key=lambda uid: nodes[uid].x)
+        labelled = [e for lst in down[r].values() for _, e in lst if _edge_text(graph, e, show_ports)]
+        stack = max((len(v) for v in parents.values()), default=0) if labelled else 0
+        label_room = stack * PORT_H + 4
+        height = 16 + len(lane_end) * LANE + label_room if lane_end else (26 if r else 12)
+        gaps[r] = {"lane_of": lane_of, "parents": parents, "height": height}
+
+    y = 16
+    for r in range(n_rows):
+        gaps[r]["top"] = y + 8
+        y += gaps[r]["height"]
+        for n in rows[r]:
+            n.y = y
+        y += ICON + max(_label_h(n) for n in rows[r])
+    width = max(n.x for n in nodes.values()) + CELL_W / 2
+    return down, same, direct, gaps, width, y + 16
+
+
 def render_png(graph, show_ports=False, scale=2):
     from PIL import Image, ImageDraw
 
-    icon = 64
-    nodes = graph.nodes.values()
-    w = int((max(n.x for n in nodes) + 100) * scale)
-    h = int((max(n.y for n in nodes) + 110) * scale)
-    img = Image.new("RGB", (w, h), (255, 255, 255))
+    nodes = graph.nodes
+    down, same, direct, gaps, width, height = _plan(graph, show_ports)
+    S = scale
+    img = Image.new("RGB", (int(width * S), int(height * S)), (255, 255, 255))
     d = ImageDraw.Draw(img)
-    f_name, f_sub, f_port = _font(12 * scale, bold=True), _font(10 * scale), _font(8 * scale)
+    f_name, f_sub, f_port = _font(12 * S, bold=True), _font(10 * S), _font(8 * S)
 
-    def c(n):
-        return n.x * scale, n.y * scale
-
-    def anchors(a, b):
-        """Linie unterhalb der Beschriftung des oberen Knotens beginnen, oben am unteren Symbol enden."""
-        if a.y > b.y:
-            a, b = b, a
-        if a.y == b.y:
-            return c(a), c(b)
-        label_h = 22 + 13 * len(a.sub)
-        return (a.x * scale, (a.y + icon / 2 + label_h) * scale), (b.x * scale, (b.y - icon / 2 - 2) * scale)
-
-    for e in graph.edges:
-        a, b = graph.nodes[e.a], graph.nodes[e.b]
-        dashed = a.external or b.external
-        color = (150, 150, 150) if dashed else (60, 60, 60)
-        (x1, y1), (x2, y2) = anchors(a, b)
-        if dashed:
-            steps = int(max(abs(x2 - x1), abs(y2 - y1)) / (8 * scale)) or 1
+    def line(points, color, w=2, dashed=False):
+        pts = [(x * S, y * S) for x, y in points]
+        if not dashed:
+            d.line(pts, fill=color, width=w * S, joint="curve")
+            return
+        for (x1, y1), (x2, y2) in zip(pts, pts[1:]):
+            length = max(abs(x2 - x1), abs(y2 - y1))
+            steps = max(int(length / (6 * S)), 1)
             for i in range(0, steps, 2):
                 t1, t2 = i / steps, min((i + 1) / steps, 1)
-                d.line([(x1 + (x2 - x1) * t1, y1 + (y2 - y1) * t1), (x1 + (x2 - x1) * t2, y1 + (y2 - y1) * t2)], fill=color, width=2 * scale)
-        else:
-            d.line([(x1, y1), (x2, y2)], fill=color, width=2 * scale)
-        mx, my = (x1 + x2) / 2, (y1 + y2) / 2
-        text = None
-        if show_ports:
-            labels = _oriented(graph, e)
-            text = labels[0] + (f" (+{len(labels) - 1})" if len(labels) > 1 else "")
-        elif len(e.labels) > 1:
-            text = f"{len(e.labels)}×"
-        if text:
-            tw = d.textlength(text, font=f_port)
-            d.rounded_rectangle([mx - tw / 2 - 4 * scale, my - 7 * scale, mx + tw / 2 + 4 * scale, my + 7 * scale], radius=3 * scale, fill=(255, 255, 255), outline=(200, 200, 200))
-            d.text((mx, my), text, fill=(40, 40, 40), font=f_port, anchor="mm")
+                d.line(
+                    [(x1 + (x2 - x1) * t1, y1 + (y2 - y1) * t1), (x1 + (x2 - x1) * t2, y1 + (y2 - y1) * t2)],
+                    fill=color, width=w * S,
+                )
 
-    for n in nodes:
-        x, y = c(n)
-        pic = Image.open(BytesIO(n.icon)).convert("RGBA").resize((icon * scale, icon * scale), Image.LANCZOS)
+    def tag(text, x, y, anchor):
+        text = _clip(d, text, f_port, (CELL_W - 12) * S)
+        tw = d.textlength(text, font=f_port)
+        cx = x * S
+        cy = y * S - (6 * S if anchor == "mb" else 0)
+        d.rounded_rectangle(
+            [cx - tw / 2 - 3 * S, cy - 6 * S, cx + tw / 2 + 3 * S, cy + 6 * S],
+            radius=2 * S, fill=(255, 255, 255), outline=(215, 215, 215),
+        )
+        d.text((cx, cy), text, fill=(40, 40, 40), font=f_port, anchor="mm")
+
+    colors = {}
+
+    def color_for(uid):
+        if uid not in colors:
+            colors[uid] = PALETTE[len(colors) % len(PALETTE)]
+        return colors[uid]
+
+    labels = []  # erst nach allen Linien zeichnen, damit sie oben liegen
+
+    for r, groups in sorted(down.items()):
+        gap = gaps[r]
+        for uid, lst in groups.items():
+            u = nodes[uid]
+            ly = gap["top"] + gap["lane_of"][("d", uid)] * LANE
+            col = EXTERNAL if u.external else color_for(uid)
+            entries = []
+            for c, e in lst:
+                plist = gap["parents"][c.id]
+                k = plist.index(uid)
+                # mehrere Uplinks in dasselbe Gerät: leicht versetzt einführen
+                entries.append((c, e, c.x + (k - (len(plist) - 1) / 2) * 9, len(plist) - 1 - k))
+            xs = [u.x] + [ex for _, _, ex, _ in entries]
+            u_bottom = u.y + ICON + _label_h(u) - 2
+            line([(u.x, u_bottom), (u.x, ly)], col, dashed=u.external)
+            if max(xs) > min(xs):
+                line([(min(xs), ly), (max(xs), ly)], col, dashed=u.external)
+            for c, e, ex, stack_pos in entries:
+                dashed = u.external or c.external
+                line([(ex, ly), (ex, c.y - 2)], EXTERNAL if dashed else col, w=3 if len(e.labels) > 1 else 2, dashed=dashed)
+                if min(xs) < ex < max(xs):  # Abzweig auf der Schiene markieren
+                    d.ellipse([(ex - 2.5) * S, (ly - 2.5) * S, (ex + 2.5) * S, (ly + 2.5) * S], fill=col)
+                text = _edge_text(graph, e, show_ports)
+                if text:
+                    labels.append((text, ex, c.y - 3 - stack_pos * PORT_H, "mb"))
+
+    for r, lst in same.items():
+        gap = gaps[r]
+        for i, e in enumerate(lst):
+            a, b = nodes[e.a], nodes[e.b]
+            ly = gap["top"] + gap["lane_of"][("s", i)] * LANE
+            dashed = a.external or b.external
+            line([(a.x, a.y - 2), (a.x, ly), (b.x, ly), (b.x, b.y - 2)], EXTERNAL if dashed else (70, 70, 70), dashed=dashed)
+            text = _edge_text(graph, e, show_ports)
+            if text:
+                labels.append((text, (a.x + b.x) / 2, ly, "mm"))
+
+    for e in direct:
+        a, b = nodes[e.a], nodes[e.b]
+        dashed = a.external or b.external
+        cy = a.y + ICON / 2
+        left, right = (a, b) if a.x < b.x else (b, a)
+        line(
+            [(left.x + ICON / 2 + 4, cy), (right.x - ICON / 2 - 4, cy)],
+            EXTERNAL if dashed else (70, 70, 70), w=3 if len(e.labels) > 1 else 2, dashed=dashed,
+        )
+        text = _edge_text(graph, e, show_ports)
+        if text:
+            labels.append((text, (a.x + b.x) / 2, cy - 4, "mb"))
+
+    for n in nodes.values():
+        pic = Image.open(BytesIO(n.icon)).convert("RGBA").resize((ICON * S, ICON * S), Image.LANCZOS)
         if n.external:
-            alpha = pic.getchannel("A").point(lambda v: int(v * 0.55))
-            pic.putalpha(alpha)
-        img.paste(pic, (int(x - icon * scale / 2), int(y - icon * scale / 2)), pic)
-        ty = y + icon * scale / 2 + 4 * scale
-        d.text((x, ty), _clip(d, n.label, f_name, 190 * scale), fill=(110, 110, 110) if n.external else (20, 20, 20), font=f_name, anchor="ma")
-        for i, line in enumerate(n.sub):
-            d.text((x, ty + (16 + i * 13) * scale), _clip(d, line, f_sub, 190 * scale), fill=(100, 100, 100), font=f_sub, anchor="ma")
+            pic.putalpha(pic.getchannel("A").point(lambda v: int(v * 0.5)))
+        img.paste(pic, (int((n.x - ICON / 2) * S), int(n.y * S)), pic)
+        ty = (n.y + ICON + 3) * S
+        d.text(
+            (n.x * S, ty), _clip(d, n.label, f_name, (CELL_W - 8) * S),
+            fill=(120, 120, 120) if n.external else (20, 20, 20), font=f_name, anchor="ma",
+        )
+        for i, sub in enumerate(n.sub):
+            d.text((n.x * S, ty + (16 + i * 13) * S), _clip(d, sub, f_sub, (CELL_W - 8) * S), fill=(100, 100, 100), font=f_sub, anchor="ma")
+
+    for text, x, y, anchor in labels:
+        tag(text, x, y, anchor)
 
     out = BytesIO()
     img.save(out, "PNG", optimize=True)
@@ -303,53 +449,3 @@ def _clip(d, text, font, width):
     while text and d.textlength(text + "…", font=font) > width:
         text = text[:-1]
     return text + "…"
-
-
-# --- draw.io ------------------------------------------------------------------
-
-def _small_icon(png, px=64):
-    from PIL import Image
-
-    img = Image.open(BytesIO(png)).convert("RGBA").resize((px, px), Image.LANCZOS)
-    out = BytesIO()
-    img.save(out, "PNG", optimize=True)
-    return base64.b64encode(out.getvalue()).decode("ascii")
-
-
-def render_drawio(graphs, show_ports=False):
-    """draw.io-Datei (mxfile) mit einer Seite je Standort. Symbole als eingebettete Bilder."""
-    icon_cache = {}
-    pages = []
-    for gi, g in enumerate(graphs):
-        cells = ['<mxCell id="0"/>', '<mxCell id="1" parent="0"/>']
-        for n in g.nodes.values():
-            key = id(n.icon)
-            if key not in icon_cache:
-                icon_cache[key] = _small_icon(n.icon)
-            label = escape(n.label) + "".join(f"<br><font style=\"font-size:10px\" color=\"#666666\">{escape(s)}</font>" for s in n.sub)
-            style = (
-                "shape=image;html=1;verticalLabelPosition=bottom;verticalAlign=top;labelBackgroundColor=none;"
-                f"imageAspect=0;aspect=fixed;fontStyle=1;{'opacity=55;' if n.external else ''}"
-                f"image=data:image/png,{icon_cache[key]};"
-            )
-            cells.append(
-                f'<mxCell id="{n.id}" value={quoteattr(label)} style={quoteattr(style)} vertex="1" parent="1">'
-                f'<mxGeometry x="{n.x - 32:.0f}" y="{n.y - 32:.0f}" width="64" height="64" as="geometry"/></mxCell>'
-            )
-        for i, e in enumerate(g.edges):
-            dashed = g.nodes[e.a].external or g.nodes[e.b].external
-            label = "<br>".join(escape(x) for x in _oriented(g, e)) if show_ports else (f"{len(e.labels)}×" if len(e.labels) > 1 else "")
-            style = f"endArrow=none;html=1;strokeWidth=2;strokeColor={'#999999' if dashed else '#333333'};{'dashed=1;' if dashed else ''}fontSize=9;labelBackgroundColor=#ffffff;"
-            cells.append(
-                f'<mxCell id="e{i}" value={quoteattr(label)} style={quoteattr(style)} edge="1" parent="1" source="{e.a}" target="{e.b}">'
-                '<mxGeometry relative="1" as="geometry"/></mxCell>'
-            )
-        pages.append(
-            f'<diagram id="page{gi}" name={quoteattr(g.title)}><mxGraphModel dx="1200" dy="800" grid="1" gridSize="10" '
-            f'guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="0" pageScale="1" math="0" shadow="0">'
-            f'<root>{"".join(cells)}</root></mxGraphModel></diagram>'
-        )
-    return f'<mxfile host="netbox-customer-export">{"".join(pages)}</mxfile>'.encode("utf-8")
-
-
-__all__ = ["build_graphs", "render_png", "render_drawio", "SIZE"]

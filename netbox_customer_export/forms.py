@@ -9,7 +9,7 @@ from .models import BrandingProfile, TopologySymbol
 from .sections import DEFAULT_DEVICE_COLUMNS, DEVICE_COLUMNS, SECTIONS
 from .symbols import KIND_CHOICES
 
-FORMAT_CHOICES = (("pdf", "PDF"), ("docx", "Word"), ("html", "HTML-Vorschau"), ("drawio", "draw.io"))
+FORMAT_CHOICES = (("pdf", "PDF"), ("docx", "Word"), ("html", "HTML-Vorschau"))
 
 
 class ScopeSelectForm(forms.Form):
