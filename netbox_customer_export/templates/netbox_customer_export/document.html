@@ -8,6 +8,7 @@
   @page { size: A4; margin: 20mm 15mm 20mm 15mm;
     @bottom-left { content: element(footer); }
     @bottom-right { content: "Seite " counter(page) " / " counter(pages); font-size: 7pt; color: #777; } }
+  @page landscape { size: A4 landscape; margin: 12mm 15mm 16mm 15mm; }
   @page cover { @bottom-left { content: none } @bottom-right { content: none } }
   body { font-family: "{{ b.font_family }}", "Segoe UI", "DejaVu Sans", Arial, sans-serif; font-size: {{ b.font_size }}pt; color: #222; }
   .cover { page: cover; padding-top: 60mm; page-break-after: always; }
@@ -40,6 +41,11 @@
   figcaption { font-style: italic; color: #555; }
   .footer { position: running(footer); font-size: 7pt; color: #777; }
   @media screen { .footer { display: none; } }
+  .landscape { page: landscape; page-break-before: always; page-break-after: always; }
+  .landscape h1 { page-break-before: avoid; margin-top: 0; }
+  .landscape h2 { margin-top: 4pt; }
+  .landscape img { display: block; margin: 0 auto; max-width: 100%; max-height: 152mm; }
+  @media screen { .landscape img { max-height: none; width: 100%; } }
   .pagebreak { page-break-after: always; }
   @media screen { body { max-width: 1100px; margin: auto; padding: 16px; } }
 {{ b.extra_css|safe }}
@@ -73,6 +79,11 @@
   {% elif b.kind == 'images' %}
     <div class="images{% if b.level == 1 %} wide{% endif %}">{% for img in b.images %}<figure><img src="{{ img.data_uri }}" alt="{{ img.caption }}">{% if img.caption %}<figcaption>{{ img.caption }}</figcaption>{% endif %}</figure>{% endfor %}</div>
   {% elif b.kind == 'pagebreak' %}<div class="pagebreak"></div>
+  {% elif b.kind == 'landscape' %}
+    <section class="landscape">
+      {% for h in b.rows %}{% if h.level == 1 %}<h1 id="{{ h.anchor }}">{{ h.text }}</h1>{% else %}<h2 id="{{ h.anchor }}">{{ h.text }}</h2>{% endif %}{% endfor %}
+      <img src="{{ b.images.0.data_uri }}" alt="">
+    </section>
   {% endif %}
 {% endfor %}
 </body>

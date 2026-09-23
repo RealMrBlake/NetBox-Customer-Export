@@ -219,6 +219,8 @@ Der Abschnitt **Netzwerk-Topologie** zeichnet je Standort ein Diagramm mit Symbo
   Die Reihenfolge innerhalb einer Ebene wird so optimiert, dass sich möglichst wenige Leitungen kreuzen.
 * Leitungen werden **rechtwinklig** über eigene Sammelschienen geführt, farbig je übergeordnetem Gerät. Portnamen stehen
   direkt am Zielgerät, Mehrfach-Uplinks werden dicker gezeichnet und als „2×“ markiert.
+* Jede Topologie steht auf einer **eigenen Seite im Querformat** (PDF und Word) und wird so groß wie möglich skaliert.
+  Danach geht das Dokument im Hochformat weiter.
 * Provider-Leitungen erscheinen als Wolke, Geräte anderer Standorte gestrichelt (abschaltbar).
 * Beschriftung wählbar: Management-IP, Modell, Ports an den Verbindungen.
 

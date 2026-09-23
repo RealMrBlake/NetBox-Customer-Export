@@ -61,6 +61,7 @@ def render_docx(doc):
         # Ohne Vorlage: Standarddokument mit Farben/Schrift aus dem Branding
         d = Docx()
         sec = d.sections[0]
+        sec.page_width, sec.page_height = Cm(21), Cm(29.7)  # A4 statt US-Letter aus der python-docx-Vorlage
         sec.left_margin = sec.right_margin = Cm(2)
         sec.top_margin = sec.bottom_margin = Cm(2)
         d.styles["Normal"].font.name = b["font_family"]
@@ -116,8 +117,42 @@ def render_docx(doc):
     d.settings.element.append(upd)
     d.add_page_break()
 
+    from docx.enum.section import WD_ORIENT, WD_SECTION
+
+    portrait = d.sections[-1]
+    portrait_size = (portrait.page_width, portrait.page_height)
+    landscape_open = False
+
+    def new_section(landscape):
+        s = d.add_section(WD_SECTION.NEW_PAGE)
+        w, h = portrait_size
+        s.orientation = WD_ORIENT.LANDSCAPE if landscape else WD_ORIENT.PORTRAIT
+        s.page_width, s.page_height = (h, w) if landscape else (w, h)
+        return s
+
     for blk in doc.blocks:
-        if blk.kind == "heading":
+        if landscape_open and blk.kind != "landscape":
+            # erst beim nächsten Inhalt zurück ins Hochformat – vermeidet leere Seiten
+            new_section(landscape=False)
+            landscape_open = False
+        if blk.kind == "landscape":
+            s = new_section(landscape=True)
+            landscape_open = True
+            for h in blk.rows:
+                d.add_heading(h.text, level=h.level)
+            png = blk.images[0]["png"]
+            from PIL import Image
+
+            px_w, px_h = Image.open(BytesIO(png)).size
+            avail_w = s.page_width - s.left_margin - s.right_margin
+            avail_h = s.page_height - s.top_margin - s.bottom_margin - Cm(1.4 * len(blk.rows) + 0.8)
+            para = d.add_paragraph()
+            para.alignment = WD_ALIGN_PARAGRAPH.CENTER
+            if px_w / px_h >= avail_w / avail_h:
+                para.add_run().add_picture(BytesIO(png), width=avail_w)
+            else:
+                para.add_run().add_picture(BytesIO(png), height=avail_h)
+        elif blk.kind == "heading":
             d.add_heading(blk.text, level=min(blk.level, 4))
         elif blk.kind == "paragraph":
             d.add_paragraph(blk.text)

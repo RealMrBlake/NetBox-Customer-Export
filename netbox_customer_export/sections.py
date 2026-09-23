@@ -7,7 +7,7 @@ from django.apps import apps
 from django.contrib.contenttypes.models import ContentType
 from netbox.plugins import get_plugin_config
 
-from .blocks import EMPTY, H, IMAGES, KV, P, PAGEBREAK, T, get
+from .blocks import EMPTY, H, IMAGES, KV, LANDSCAPE, P, PAGEBREAK, T, get
 from .rack_png import render_rack_png
 from .rack_svg import render_rack_svg
 
@@ -412,12 +412,13 @@ def licenses(scope, opts):
 def topology(scope, opts):
     from .topology import build_graphs, render_png
 
-    blocks = [H(1, "Netzwerk-Topologie")]
+    title = H(1, "Netzwerk-Topologie")
     graphs = build_graphs(scope, opts)
     if not graphs:
-        return _empty(opts, blocks, "Keine verkabelten Geräte gefunden.")
+        return _empty(opts, [title], "Keine verkabelten Geräte gefunden.")
     ports = "ports" in (opts.get("topo_details") or [])
-    for g in graphs:
-        blocks.append(H(2, g.title))
-        blocks.append(IMAGES([(None, "", render_png(g, show_ports=ports))], wide=True))
-    return blocks
+    # Je Standort eine Querformat-Seite; die Abschnittsüberschrift steht mit auf der ersten
+    return [
+        LANDSCAPE(([title] if i == 0 else []) + [H(2, g.title)], render_png(g, show_ports=ports))
+        for i, g in enumerate(graphs)
+    ]

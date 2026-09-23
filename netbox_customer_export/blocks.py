@@ -28,7 +28,11 @@ class Document:
 
     @property
     def toc(self):
-        return [b for b in self.blocks if b.kind == "heading" and b.level <= 2]
+        out = []
+        for b in self.blocks:
+            headings = b.rows if b.kind == "landscape" else [b]
+            out += [h for h in headings if h.kind == "heading" and h.level <= 2]
+        return out
 
 
 _anchor_counter = {"n": 0}
@@ -64,6 +68,12 @@ def IMAGES(images, wide=False):
             continue
         out.append({"svg": svg, "png": png, "caption": caption, "data_uri": data_uri})
     return Block("images", images=out, level=1 if wide else 0)  # level=1: volle Seitenbreite
+
+
+def LANDSCAPE(headings, png):
+    """Eigene Seite im Querformat: Überschriften + Bild so groß wie möglich (z.B. Topologie)."""
+    data_uri = "data:image/png;base64," + base64.b64encode(png).decode("ascii")
+    return Block("landscape", rows=list(headings), images=[{"svg": None, "png": png, "caption": "", "data_uri": data_uri}])
 
 
 def PAGEBREAK():
