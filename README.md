@@ -80,20 +80,37 @@ PLUGINS_CONFIG = {
 }
 ```
 
-### 5. NetBox neu starten
+### 5. Migrationen, statische Dateien, Neustart
 
 ```bash
+source /opt/netbox/venv/bin/activate
+cd /opt/netbox/netbox
+python3 manage.py migrate
+python3 manage.py collectstatic --no-input
+python3 manage.py remove_stale_contenttypes --no-input
+python3 manage.py clearsessions
 sudo systemctl restart netbox netbox-rq
 ```
 
-Das Plugin hat weder Datenbankmodelle noch statische Dateien. `migrate` und `collectstatic` sind daher nicht nötig.
+Die Befehle gehören zum üblichen NetBox-Ablauf nach jeder Plugin-Installation und laufen auch dann fehlerfrei, wenn es nichts zu tun gibt.
+Die aktuelle Version hat noch keine eigenen Datenbanktabellen und keine statischen Dateien. Spätere Versionen können sie aber mitbringen.
 
 ## Update
 
 ```bash
 source /opt/netbox/venv/bin/activate
-pip install --upgrade --force-reinstall --no-deps \
-  "netbox-customer-export @ git+https://git.mrblake.cc/MrBlake/NetBox-Customer-Export.git"
+pip install --upgrade --force-reinstall --no-deps "netbox-customer-export @ git+https://git.mrblake.cc/MrBlake/NetBox-Customer-Export.git"
+```
+
+Danach wie bei der Installation:
+
+```bash
+source /opt/netbox/venv/bin/activate
+cd /opt/netbox/netbox
+python3 manage.py migrate
+python3 manage.py collectstatic --no-input
+python3 manage.py remove_stale_contenttypes --no-input
+python3 manage.py clearsessions
 sudo systemctl restart netbox netbox-rq
 ```
 
