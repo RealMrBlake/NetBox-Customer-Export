@@ -8,7 +8,7 @@ logger = logging.getLogger("netbox_customer_export")
 
 
 def render_rack_svg(rack, face, user):
-    """Gibt das SVG als String zurück oder None bei Fehlern.
+    """Gibt (svg, fehler) zurück – genau einer der beiden Werte ist None.
 
     Ist ``rack_svg_renderer`` gesetzt (z.B. der Offline-Renderer aus Netbox-Utilities, der mehrere
     Geräte pro HE korrekt darstellt), wird dieser aufgerufen: ``fn(rack=..., face=..., user=...)``.
@@ -22,7 +22,7 @@ def render_rack_svg(rack, face, user):
             from dcim.svg import RackElevationSVG
 
             svg = RackElevationSVG(rack, user=user, include_images=False, base_url="").render(face)
-        return svg.tostring() if hasattr(svg, "tostring") else str(svg)
-    except Exception:  # noqa: BLE001 – ein defektes Rack soll nicht den ganzen Export abbrechen
+        return (svg.tostring() if hasattr(svg, "tostring") else str(svg)), None
+    except Exception as e:  # noqa: BLE001 – ein defektes Rack soll nicht den ganzen Export abbrechen
         logger.exception("Rack-SVG für %s (%s) fehlgeschlagen", rack, face)
-        return None
+        return None, f"{type(e).__name__}: {e}"

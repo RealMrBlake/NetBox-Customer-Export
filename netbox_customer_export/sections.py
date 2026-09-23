@@ -172,13 +172,17 @@ def racks(scope, opts):
                     )
                 )
                 if opts.get("rack_svg"):
-                    images = []
+                    images, errors = [], []
                     for face in opts.get("rack_faces") or ["front"]:
-                        svg = render_rack_svg(rack, face, scope.user)
+                        caption = "Vorderseite" if face == "front" else "Rückseite"
+                        svg, error = render_rack_svg(rack, face, scope.user)
                         if svg:
-                            images.append((svg, "Vorderseite" if face == "front" else "Rückseite"))
+                            images.append((svg, caption))
+                        else:
+                            errors.append(f"Rack-Ansicht ({caption}) konnte nicht erzeugt werden: {error}")
                     if images:
                         blocks.append(IMAGES(images))
+                    blocks += [P(e) for e in errors]
                 if opts.get("rack_devices"):
                     devs = scope.restrict(rack.devices.all()).select_related("device_type__manufacturer").order_by("-position", "name")
                     if devs.exists():
