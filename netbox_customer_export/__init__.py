@@ -9,7 +9,7 @@ class CustomerExportConfig(PluginConfig):
     author = "Claude"
     base_url = "customer-export"
     min_version = "4.6.8"
-    max_version = "4.6.99"
+    max_version = "4.7.99"
     default_settings = {
         # Branding: Einzelschlüssel (company_name, logo_path, primary_color, docx_template, …)
         # gelten global; "brandings" definiert mehrere Profile. Defaults siehe branding.py.
