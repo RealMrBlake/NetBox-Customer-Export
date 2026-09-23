@@ -1,6 +1,6 @@
 # NetBox Customer Export
 
-NetBox-Plugin (4.6.8 – 4.6.99) zum Export einer verständlichen **Kundendokumentation als PDF oder Word**
+NetBox-Plugin (4.6.8 – 4.7.99) zum Export einer verständlichen **Kundendokumentation als PDF oder Word**
 für einen **Standort, eine Lokation, einen Mandanten oder eine Mandantengruppe**.
 
 Der Techniker wählt vor dem Export aus, welche Inhalte das Dokument enthalten soll:
@@ -127,7 +127,7 @@ pip show netbox-customer-export
 ### NetBox-Update
 
 Beim NetBox-Update installiert `sudo /opt/netbox/upgrade.sh` das Plugin automatisch aus `local_requirements.txt` neu.
-Vorher prüfen, ob die Plugin-Version die neue NetBox-Version unterstützt (`min_version`/`max_version`, aktuell 4.6.8 – 4.6.99).
+Vorher prüfen, ob die Plugin-Version die neue NetBox-Version unterstützt (`min_version`/`max_version`, aktuell 4.6.8 – 4.7.99).
 Andernfalls verweigert NetBox den Start.
 
 ## Deinstallation
