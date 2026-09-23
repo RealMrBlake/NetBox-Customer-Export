@@ -67,12 +67,16 @@ class ExportForm(forms.Form):
 
     def __init__(self, *args, scope=None, **kwargs):
         super().__init__(*args, **kwargs)
+        # Ohne diese Klasse stellt NetBox' CSS die Checkboxen als leere Eingabefelder dar
+        for field in self.fields.values():
+            if isinstance(field.widget, (forms.CheckboxInput, forms.CheckboxSelectMultiple)):
+                field.widget.attrs["class"] = "form-check-input"
         self.fields["branding"].choices = [(k, b["name"]) for k, b in get_brandings().items()]
         if scope is not None:
             role_ids = scope.devices().values("role")
             roles = DeviceRole.objects.filter(pk__in=role_ids).order_by("name")
             self.fields["roles"].queryset = roles
-            self.fields["roles"].initial = list(roles)
+            self.fields["roles"].initial = [r.pk for r in roles]
             self.fields["title"].initial = f"Netzwerkdokumentation {scope.obj}"
             self.fields["subtitle"].initial = f"{scope.label}: {scope.obj}"
         if not get_plugin_config("netbox_customer_export", "allow_secrets"):
