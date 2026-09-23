@@ -178,14 +178,15 @@ def racks(scope, opts):
                     rack_devs = list(
                         scope.restrict(rack.devices.all()).select_related("device_type", "role")
                     )
+                    with_images = bool(opts.get("rack_images"))
                     for face in opts.get("rack_faces") or ["front"]:
                         caption = "Vorderseite" if face == "front" else "Rückseite"
-                        svg, svg_error = render_rack_svg(rack, face, scope.user)
+                        svg, svg_error = render_rack_svg(rack, face, scope.user, images=with_images, devices=rack_devs)
                         png = None
                         # PNG wird für Word gebraucht (falls kein cairosvg) und ersetzt ein fehlgeschlagenes SVG
                         if opts.get("format") == "docx" or not svg:
                             try:
-                                png = render_rack_png(rack, face, rack_devs)
+                                png = render_rack_png(rack, face, rack_devs, images=with_images)
                             except Exception as e:  # noqa: BLE001
                                 svg_error = f"{svg_error or ''} / PNG: {type(e).__name__}: {e}".strip(" /")
                         if svg or png:

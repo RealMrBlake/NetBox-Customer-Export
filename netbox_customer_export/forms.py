@@ -53,6 +53,7 @@ class ExportForm(forms.Form):
     group_by_site = forms.BooleanField(required=False, initial=True, label="Geräte nach Standort gruppieren")
 
     rack_svg = forms.BooleanField(required=False, initial=True, label="Rack-Ansichten (SVG) einbetten")
+    rack_images = forms.BooleanField(required=False, initial=False, label="Gerätebilder anzeigen (wie in NetBox)")
     rack_faces = forms.MultipleChoiceField(
         choices=(("front", "Vorderseite"), ("rear", "Rückseite")),
         initial=["front"],

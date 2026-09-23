@@ -27,7 +27,7 @@
   .ce-format .btn { flex: 1; }
 </style>
 
-<form method="post" class="mt-3">
+<form method="post" class="mt-3" id="ce-export-form">
   {% csrf_token %}
   {% if form.errors %}<div class="alert alert-danger">{{ form.errors }}</div>{% endif %}
 
@@ -108,7 +108,8 @@
           <div class="card ce-card h-100" data-ce-depends="racks">
             <h2 class="card-header"><i class="mdi mdi-server"></i> Racks</h2>
             <div class="card-body">
-              <label class="ce-switch">{{ form.rack_svg }} {{ form.rack_svg.label }}</label>
+              <label class="ce-switch">{{ form.rack_svg }} Rack-Ansichten einbetten</label>
+              <label class="ce-switch">{{ form.rack_images }} {{ form.rack_images.label }}</label>
               <div class="ce-label">Seiten</div>
               {% include 'netbox_customer_export/_pills.html' with field=form.rack_faces %}
               <div class="ce-label">Weiteres</div>
@@ -146,6 +147,12 @@
     }
     document.addEventListener('change', sync);
     sync();
+    // HTML-Vorschau in neuem Tab öffnen, PDF/Word laden wie gewohnt herunter
+    var form = document.getElementById('ce-export-form');
+    form.addEventListener('submit', function () {
+      var fmt = form.querySelector('input[name=format]:checked');
+      form.target = fmt && fmt.value === 'html' ? '_blank' : '';
+    });
   })();
 </script>
 {% endblock %}

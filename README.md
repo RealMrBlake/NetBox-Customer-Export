@@ -8,7 +8,7 @@ Der Techniker wählt vor dem Export aus, welche Inhalte das Dokument enthalten s
 | Gruppe | Inhalte |
 |---|---|
 | Allgemein | Übersicht & Standortdaten (Adresse, Lokationsbaum, Kennzahlen), Ansprechpartner |
-| Infrastruktur | Racks nach Standort → Lokation mit Rack-Ansicht (SVG, Vorder-/Rückseite) und Belegungsliste, Geräte nach **frei wählbaren Geräterollen** (Server, Switche, APs, Router …) mit **frei wählbaren Spalten**, Stromversorgung, VMs |
+| Infrastruktur | Racks nach Standort → Lokation mit Rack-Ansicht (Vorder-/Rückseite, optional mit Gerätebildern wie in NetBox) und Belegungsliste, Geräte nach **frei wählbaren Geräterollen** (Server, Switche, APs, Router …) mit **frei wählbaren Spalten**, Stromversorgung, VMs |
 | Netzwerk | VRFs (inkl. RTs), Präfixe nach VRF, VLANs, IP-Adressen (ausführlich), WLANs/SSIDs, Leitungen |
 | Verträge & Lizenzen | Lizenzen aus einem Lizenz-Plugin (Standard: `netbox-lifecycle`) |
 

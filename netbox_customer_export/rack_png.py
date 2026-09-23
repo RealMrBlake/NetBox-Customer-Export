@@ -53,8 +53,28 @@ def _fit(draw, text, font, width):
     return text + "…"
 
 
-def render_rack_png(rack, face, devices):
-    """devices: iterierbare Geräte des Racks (bereits nach Berechtigung gefiltert)."""
+def _paste_image(img, image_field, box):
+    """Gerätebild in das Rechteck box=(x1, y1, x2, y2) einpassen. False, wenn nicht lesbar."""
+    from PIL import Image
+
+    x1, y1, x2, y2 = (int(round(v)) for v in box)
+    try:
+        with image_field.open("rb") as f:
+            pic = Image.open(f).convert("RGBA")
+            pic = pic.resize((max(x2 - x1, 1), max(y2 - y1, 1)), Image.LANCZOS)
+    except (OSError, ValueError):
+        return False
+    img.paste(pic, (x1, y1), pic)
+    return True
+
+
+def render_rack_png(rack, face, devices, images=False):
+    """devices: iterierbare Geräte des Racks (bereits nach Berechtigung gefiltert).
+
+    images=True: Front-/Rückbilder der Gerätetypen einzeichnen (wie die NetBox-Rackansicht).
+    """
+    from .rack_svg import device_image
+
     from PIL import Image, ImageDraw
 
     units = int(rack.u_height)
@@ -99,9 +119,20 @@ def render_rack_png(rack, face, devices):
         rear_only = d.face != face  # Full-Depth-Gerät von der anderen Seite: aufgehellt
         if rear_only:
             fill = tuple(int(c + (255 - c) * 0.55) for c in fill)
-        draw.rectangle([left + 1, y1 + 1, left + BODY_W - 1, y2 - 1], fill=fill, outline=FRAME_COLOR)
-        name = _fit(draw, d.name or str(d.device_type), normal, BODY_W - 12 * SCALE)
-        draw.text((left + BODY_W / 2, (y1 + y2) / 2), name, fill=_text_color(fill), font=normal, anchor="mm")
+        box = (left + 1, y1 + 1, left + BODY_W - 1, y2 - 1)
+        image = device_image(d.device_type, face) if images and not rear_only else None
+        name = _fit(draw, d.name or str(d.device_type), normal, BODY_W - 20 * SCALE)
+        if image and _paste_image(img, image, box):
+            draw.rectangle(box, outline=FRAME_COLOR)
+            # Name auf dunklem Balken, damit er auf jedem Bild lesbar bleibt
+            tw = draw.textlength(name, font=normal)
+            cx, cy = left + BODY_W / 2, (y1 + y2) / 2
+            pad_x, half_h = 5 * SCALE, 7 * SCALE
+            draw.rounded_rectangle([cx - tw / 2 - pad_x, cy - half_h, cx + tw / 2 + pad_x, cy + half_h], radius=3 * SCALE, fill=(30, 30, 30))
+            draw.text((cx, cy), name, fill=(255, 255, 255), font=normal, anchor="mm")
+        else:
+            draw.rectangle(box, fill=fill, outline=FRAME_COLOR)
+            draw.text((left + BODY_W / 2, (y1 + y2) / 2), name, fill=_text_color(fill), font=normal, anchor="mm")
 
     draw.rectangle([left, top, left + BODY_W, top + units * UNIT_H], outline=FRAME_COLOR, width=FRAME)
 
