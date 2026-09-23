@@ -2,6 +2,7 @@
 import base64
 import logging
 import mimetypes
+import re
 
 from django.utils.module_loading import import_string
 from netbox.plugins import get_plugin_config
@@ -46,6 +47,57 @@ def _inline_images(svg, devices):
     return svg
 
 
+# Helles NetBox-Theme mit festen Werten. Das Original-Stylesheet nutzt CSS-Variablen (var(--nbx-…)),
+# die WeasyPrint und cairosvg nicht auflösen. Leere HE würden sonst schwarz gefüllt.
+STATIC_CSS = """
+svg { font-family: Helvetica, Arial, sans-serif; font-size: 11px; }
+text { text-anchor: middle; dominant-baseline: middle; }
+.unit { fill: #6c757d; }
+.hidden { visibility: hidden; }
+rect.shaded, image.shaded { opacity: .25; }
+text.shaded { opacity: .5; }
+.rack { fill: none; stroke-width: 2px; stroke: #000000; }
+.slot { fill: #e9ecef; stroke: #adb5bd; }
+.slot.occupied[class] { fill: url(#occupied); }
+.slot.blocked[class] { fill: url(#blocked); }
+.reservation[class] { fill: url(#reserved); }
+"""
+
+# class -> Präsentationsattribute (Fallback, falls der Renderer <style> ignoriert)
+_CLASS_ATTRS = (
+    ("occupied", {"fill": "url(#occupied)", "stroke": "#adb5bd"}),
+    ("blocked", {"fill": "url(#blocked)", "stroke": "#adb5bd"}),
+    ("reservation", {"fill": "url(#reserved)"}),
+    ("slot", {"fill": "#e9ecef", "stroke": "#adb5bd"}),
+    ("rack", {"fill": "none", "stroke": "#000000", "stroke-width": "2"}),
+    ("unit", {"fill": "#6c757d"}),
+    ("hidden", {"visibility": "hidden"}),
+)
+_TAG_WITH_CLASS = re.compile(r'<(rect|text|image|path|line)\b([^<>]*?)\sclass="([^"]*)"([^<>]*?)(/?)>')
+
+
+def _apply_class_attrs(match):
+    tag, before, classes, after, close = match.groups()
+    names = classes.split()
+    attrs = {}
+    for cls, values in _CLASS_ATTRS:
+        if cls in names:
+            attrs = {**values, **attrs}  # spezifischere Klassen (weiter oben) gewinnen
+    if "shaded" in names:
+        attrs["opacity"] = "0.5" if tag == "text" else "0.25"
+    existing = before + after
+    extra = "".join(f' {k}="{v}"' for k, v in attrs.items() if f" {k}=" not in existing)
+    return f'<{tag}{before} class="{classes}"{after}{extra}{close}>'
+
+
+def normalize_svg(svg):
+    """Macht das NetBox-SVG druck- und renderertauglich (feste Farben, keine Hover-Texte)."""
+    svg = re.sub(r"<style[^>]*>.*?</style>", f"<style>{STATIC_CSS}</style>", svg, count=1, flags=re.S)
+    # "Add Device"-Texte sind nur per Hover sichtbar – im Dokument entfernen
+    svg = re.sub(r'<text\b[^>]*class="[^"]*add-device[^"]*"[^>]*>.*?</text>', "", svg, flags=re.S)
+    return _TAG_WITH_CLASS.sub(_apply_class_attrs, svg)
+
+
 def render_rack_svg(rack, face, user, images=False, devices=()):
     """Gibt (svg, fehler) zurück – genau einer der beiden Werte ist None.
 
@@ -77,6 +129,7 @@ def render_rack_svg(rack, face, user, images=False, devices=()):
                 base_url="",
             ).render(face)
         svg = svg.tostring() if hasattr(svg, "tostring") else str(svg)
+        svg = normalize_svg(svg)
         if images:
             svg = _inline_images(svg, devices)
         return svg, None
