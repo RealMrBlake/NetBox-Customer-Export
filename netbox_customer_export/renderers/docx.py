@@ -123,11 +123,19 @@ def render_docx(doc):
     portrait_size = (portrait.page_width, portrait.page_height)
     landscape_open = False
 
+    portrait_margins = (
+        portrait.left_margin, portrait.right_margin, portrait.top_margin, portrait.bottom_margin,
+        portrait.header_distance, portrait.footer_distance,
+    )
+
     def new_section(landscape):
         s = d.add_section(WD_SECTION.NEW_PAGE)
         w, h = portrait_size
         s.orientation = WD_ORIENT.LANDSCAPE if landscape else WD_ORIENT.PORTRAIT
         s.page_width, s.page_height = (h, w) if landscape else (w, h)
+        if not landscape:  # Ränder der Hochformat-Seiten wiederherstellen
+            (s.left_margin, s.right_margin, s.top_margin, s.bottom_margin,
+             s.header_distance, s.footer_distance) = portrait_margins
         return s
 
     for blk in doc.blocks:
@@ -137,15 +145,21 @@ def render_docx(doc):
             landscape_open = False
         if blk.kind == "landscape":
             s = new_section(landscape=True)
+            # schmale Ränder, damit die Topologie möglichst groß wird
+            s.left_margin = s.right_margin = Cm(0.7)
+            s.top_margin, s.bottom_margin = Cm(0.7), Cm(1.1)
+            s.header_distance, s.footer_distance = Cm(0.3), Cm(0.4)
             landscape_open = True
             for h in blk.rows:
-                d.add_heading(h.text, level=h.level)
+                heading = d.add_heading(h.text, level=h.level)
+                heading.paragraph_format.space_before = Pt(0)
+                heading.paragraph_format.space_after = Pt(2)
             png = blk.images[0]["png"]
             from PIL import Image
 
             px_w, px_h = Image.open(BytesIO(png)).size
             avail_w = s.page_width - s.left_margin - s.right_margin
-            avail_h = s.page_height - s.top_margin - s.bottom_margin - Cm(1.4 * len(blk.rows) + 0.8)
+            avail_h = s.page_height - s.top_margin - s.bottom_margin - Cm(1.1 * len(blk.rows) + 0.6)
             para = d.add_paragraph()
             para.alignment = WD_ALIGN_PARAGRAPH.CENTER
             if px_w / px_h >= avail_w / avail_h:

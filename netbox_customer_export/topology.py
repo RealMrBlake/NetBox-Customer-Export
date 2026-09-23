@@ -438,6 +438,14 @@ def render_png(graph, show_ports=False, scale=2):
     for text, x, y, anchor in labels:
         tag(text, x, y, anchor)
 
+    # weißen Rand abschneiden: jeder Millimeter kommt der Größe im Dokument zugute
+    from PIL import ImageChops
+
+    bbox = ImageChops.difference(img, Image.new("RGB", img.size, (255, 255, 255))).getbbox()
+    if bbox:
+        pad = 6 * S
+        img = img.crop((max(bbox[0] - pad, 0), max(bbox[1] - pad, 0), min(bbox[2] + pad, img.width), min(bbox[3] + pad, img.height)))
+
     out = BytesIO()
     img.save(out, "PNG", optimize=True)
     return out.getvalue()
