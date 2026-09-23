@@ -9,7 +9,7 @@ Der Techniker wählt vor dem Export aus, welche Inhalte das Dokument enthalten s
 |---|---|
 | Allgemein | Übersicht & Standortdaten (Adresse, Lokationsbaum, Kennzahlen), Ansprechpartner |
 | Infrastruktur | Racks nach Standort → Lokation mit Rack-Ansicht (Vorder-/Rückseite, optional mit Gerätebildern wie in NetBox) und Belegungsliste, Geräte nach **frei wählbaren Geräterollen** (Server, Switche, APs, Router …) mit **frei wählbaren Spalten**, Stromversorgung, VMs |
-| Netzwerk | VRFs (inkl. RTs), Präfixe nach VRF, VLANs, IP-Adressen (ausführlich), WLANs/SSIDs, Leitungen |
+| Netzwerk | VRFs (inkl. RTs), Präfixe nach VRF, VLANs, IP-Adressen (ausführlich), WLANs/SSIDs, Leitungen, **Netzwerk-Topologie** |
 | Verträge & Lizenzen | Lizenzen aus einem Lizenz-Plugin (Standard: `netbox-lifecycle`) |
 
 Alle Abfragen laufen über die NetBox-Berechtigungen (`.restrict(user, "view")`). Ein Techniker exportiert also nur, was er auch sehen darf.
@@ -18,6 +18,8 @@ Alle Abfragen laufen über die NetBox-Berechtigungen (`.restrict(user, "view")`)
 
 * Button **„Kundendoku“** auf Standort-, Lokations-, Mandanten- und Mandantengruppen-Seiten
 * oder Menü **Plugins → Kundendokumentation**
+
+Formate: **PDF**, **Word**, **HTML-Vorschau** (öffnet in neuem Tab) und **draw.io** (nur Topologie, editierbar).
 
 ## Installation
 
@@ -92,7 +94,7 @@ python3 manage.py clearsessions
 sudo systemctl restart netbox netbox-rq
 ```
 
-`migrate` ist ab Version 0.2.0 **Pflicht**, denn es legt die Tabelle für die Branding-Profile an. Die übrigen Befehle gehören zum
+`migrate` ist ab Version 0.2.0 **Pflicht**, denn es legt die Tabellen für Branding-Profile und (ab 0.4.0) Topologie-Symbole an. Die übrigen Befehle gehören zum
 üblichen NetBox-Ablauf nach jeder Plugin-Installation.
 
 ## Update
@@ -207,6 +209,27 @@ PLUGINS_CONFIG = {
 Farben werden als Hex angegeben, mit oder ohne `#`. Ungültige Werte führen beim Export zu einer klaren Fehlermeldung.
 Mit einer Word-Vorlage bestimmt die Vorlage die Überschriften-Formate. Ohne Vorlage färbt das Plugin die Überschriften selbst ein.
 Bringt die Vorlage eine eigene Fußzeile mit, wird diese beibehalten.
+
+### Netzwerk-Topologie
+
+Der Abschnitt **Netzwerk-Topologie** zeichnet je Standort ein Diagramm mit Symbolen im Stil von Cisco Packet Tracer:
+
+* Verbindungen stammen aus den **Kabelpfaden** in NetBox. Pfade über Patchpanels werden bis zum Endgerät verfolgt.
+* Die Anordnung von oben nach unten ergibt sich aus der Verkabelung: Provider → Firewall/Router → Core → Access → Endgeräte.
+  Mehrfach-Uplinks werden als „2×“ markiert.
+* Provider-Leitungen erscheinen als Wolke, Geräte anderer Standorte gestrichelt (abschaltbar).
+* Beschriftung wählbar: Management-IP, Modell, Ports an den Verbindungen.
+* Mit dem Format **draw.io** wird die Topologie als editierbare `.drawio`-Datei exportiert, eine Seite je Standort.
+
+**Symbole** (Menü **Plugins → Topologie-Symbole**, oder Button „Topologie-Symbol“ auf Gerätetyp- und Geräterollen-Seiten):
+
+1. Zuordnung je **Gerätetyp**: eingebautes Symbol wählen oder **eigenes Icon hochladen** (PNG/JPG, idealerweise transparent)
+2. Zuordnung je **Geräterolle**
+3. sonst **automatisch** anhand von Rolle, Modell und Hersteller (z.B. „Switch“, „Sophos“, „Access Point“, „Core“)
+
+Patchpanels, Steckdosenleisten, PDUs und USVs werden automatisch ausgeblendet. Über „In Topologie ausblenden“ lassen sich
+weitere Gerätetypen oder Rollen ausblenden. Eigene Icons liegen unter `MEDIA_ROOT/customer-export/symbols/`.
+Berechtigungen: Objekttyp *Customer Export | Topologie-Symbol*, analog zu den Branding-Profilen.
 
 ### Rack-Ansichten
 

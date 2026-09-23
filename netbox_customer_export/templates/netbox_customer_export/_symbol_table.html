@@ -1,0 +1,27 @@
+<div class="table-responsive">
+  <table class="table table-hover card-table align-middle">
+    <thead><tr><th style="width:56px"></th><th>Zuordnung</th><th>Symbol</th><th></th></tr></thead>
+    <tbody>
+      {% for s, preview in rows %}
+        <tr>
+          <td>{% if preview %}<img src="{{ preview }}" class="ce-sym" alt="">{% else %}<i class="mdi mdi-eye-off-outline fs-2 text-muted"></i>{% endif %}</td>
+          <td>
+            {% if s.device_type %}<a href="{{ s.device_type.get_absolute_url }}">{{ s.device_type.manufacturer }} {{ s.device_type.model }}</a>
+            {% else %}<a href="{{ s.role.get_absolute_url }}">{{ s.role }}</a>{% endif %}
+          </td>
+          <td>{% if s.icon %}<span class="badge text-bg-blue">Eigenes Icon</span>{% endif %} {{ s.get_kind_display }}</td>
+          <td class="text-end text-nowrap">
+            {% if perms.netbox_customer_export.change_topologysymbol %}
+              <a href="{{ s.get_absolute_url }}" class="btn btn-sm btn-warning" title="Bearbeiten"><i class="mdi mdi-pencil"></i></a>
+            {% endif %}
+            {% if perms.netbox_customer_export.delete_topologysymbol %}
+              <a href="{% url 'plugins:netbox_customer_export:symbol_delete' pk=s.pk %}" class="btn btn-sm btn-danger" title="Löschen"><i class="mdi mdi-trash-can-outline"></i></a>
+            {% endif %}
+          </td>
+        </tr>
+      {% empty %}
+        <tr><td colspan="4" class="text-center text-muted py-3">{{ empty }}</td></tr>
+      {% endfor %}
+    </tbody>
+  </table>
+</div>

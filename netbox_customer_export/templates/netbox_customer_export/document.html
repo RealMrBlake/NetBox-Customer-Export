@@ -35,6 +35,7 @@
   .images { display: flex; gap: 12mm; justify-content: center; page-break-inside: avoid; }
   .images figure { margin: 0; text-align: center; }
   .images img { max-height: 190mm; max-width: 80mm; }
+  .images.wide img { max-width: 100%; max-height: 240mm; }
   figcaption { font-style: italic; color: #555; }
   .footer { position: running(footer); font-size: 7pt; color: #777; }
   @media screen { .footer { display: none; } }
@@ -69,7 +70,7 @@
   {% elif b.kind == 'kv' %}
     <table class="kv"><tbody>{% for row in b.rows %}<tr><td>{{ row.0 }}</td><td>{{ row.1|linebreaksbr }}</td></tr>{% endfor %}</tbody></table>
   {% elif b.kind == 'images' %}
-    <div class="images">{% for img in b.images %}<figure><img src="{{ img.data_uri }}" alt="{{ img.caption }}"><figcaption>{{ img.caption }}</figcaption></figure>{% endfor %}</div>
+    <div class="images{% if b.level == 1 %} wide{% endif %}">{% for img in b.images %}<figure><img src="{{ img.data_uri }}" alt="{{ img.caption }}">{% if img.caption %}<figcaption>{{ img.caption }}</figcaption>{% endif %}</figure>{% endfor %}</div>
   {% elif b.kind == 'pagebreak' %}<div class="pagebreak"></div>
   {% endif %}
 {% endfor %}

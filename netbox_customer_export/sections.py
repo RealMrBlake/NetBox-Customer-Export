@@ -406,3 +406,18 @@ def licenses(scope, opts):
     if not found_source:
         return _empty(opts, blocks, "Kein Lizenz-Plugin installiert (z.B. netbox-lifecycle) – siehe README.")
     return blocks if len(blocks) > 1 else _empty(opts, blocks)
+
+
+@section("topology", "Netzwerk-Topologie", "Netzwerk", default=False, hint="Diagramm mit Symbolen, wie Packet Tracer")
+def topology(scope, opts):
+    from .topology import build_graphs, render_png
+
+    blocks = [H(1, "Netzwerk-Topologie")]
+    graphs = build_graphs(scope, opts)
+    if not graphs:
+        return _empty(opts, blocks, "Keine verkabelten Geräte gefunden.")
+    ports = "ports" in (opts.get("topo_details") or [])
+    for g in graphs:
+        blocks.append(H(2, g.title))
+        blocks.append(IMAGES([(None, "", render_png(g, show_ports=ports))], wide=True))
+    return blocks

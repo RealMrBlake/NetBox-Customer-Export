@@ -74,3 +74,45 @@ class BrandingProfile(models.Model):
             "docx_table_style": self.docx_table_style,
             "extra_css": self.extra_css,
         }
+
+
+class TopologySymbol(models.Model):
+    """Topologie-Symbol für einen Gerätetyp oder eine Geräterolle (Gerätetyp hat Vorrang)."""
+
+    device_type = models.OneToOneField(
+        "dcim.DeviceType", on_delete=models.CASCADE, null=True, blank=True, related_name="+", verbose_name="Gerätetyp"
+    )
+    role = models.OneToOneField(
+        "dcim.DeviceRole", on_delete=models.CASCADE, null=True, blank=True, related_name="+", verbose_name="Geräterolle"
+    )
+    kind = models.CharField(max_length=20, blank=True, verbose_name="Symbol")
+    icon = models.ImageField(upload_to="customer-export/symbols/", blank=True, verbose_name="Eigenes Icon")
+    last_updated = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        ordering = ("device_type__model", "role__name")
+        verbose_name = "Topologie-Symbol"
+        verbose_name_plural = "Topologie-Symbole"
+
+    def __str__(self):
+        return str(self.device_type or self.role)
+
+    def get_absolute_url(self):
+        return reverse("plugins:netbox_customer_export:symbol_edit", kwargs={"pk": self.pk})
+
+    @property
+    def target_label(self):
+        return "Gerätetyp" if self.device_type_id else "Geräterolle"
+
+    def get_kind_display(self):
+        from .symbols import KIND_CHOICES
+
+        return dict(KIND_CHOICES).get(self.kind, "Automatisch")
+
+    def clean(self):
+        from django.core.exceptions import ValidationError
+
+        if bool(self.device_type_id) == bool(self.role_id):
+            raise ValidationError("Bitte genau einen Gerätetyp oder eine Geräterolle wählen.")
+        if not self.kind and not self.icon:
+            raise ValidationError("Bitte ein Symbol wählen oder ein eigenes Icon hochladen.")

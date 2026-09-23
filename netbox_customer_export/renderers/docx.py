@@ -160,12 +160,14 @@ def render_docx(doc):
                 cell = t.cell(0, i).paragraphs[0]
                 cell.alignment = WD_ALIGN_PARAGRAPH.CENTER
                 if png:
-                    cell.add_run().add_picture(BytesIO(png), width=Cm(7))  # Höhe skaliert mit der Rackgröße
+                    # Topologie: volle Breite; Racks: 7 cm (Höhe skaliert mit der Rackgröße)
+                    cell.add_run().add_picture(BytesIO(png), width=Cm(16.5 if blk.level == 1 else 7))
                 else:
                     cell.add_run("(Rack-Grafik nicht verfügbar)")
                 cap = t.cell(1, i).paragraphs[0]
                 cap.alignment = WD_ALIGN_PARAGRAPH.CENTER
-                cap.add_run(img["caption"]).italic = True
+                if img["caption"]:
+                    cap.add_run(img["caption"]).italic = True
             d.add_paragraph()
 
     # Fußzeile nur setzen, wenn die Vorlage keine eigene mitbringt

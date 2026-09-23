@@ -52,7 +52,7 @@ def KV(pairs, skip_empty=True):
     return Block("kv", rows=rows)
 
 
-def IMAGES(images):
+def IMAGES(images, wide=False):
     """images: Liste von (svg_string oder None, caption, png_bytes_oder_None)."""
     out = []
     for svg, caption, png in images:
@@ -63,7 +63,7 @@ def IMAGES(images):
         else:
             continue
         out.append({"svg": svg, "png": png, "caption": caption, "data_uri": data_uri})
-    return Block("images", images=out)
+    return Block("images", images=out, level=1 if wide else 0)  # level=1: volle Seitenbreite
 
 
 def PAGEBREAK():

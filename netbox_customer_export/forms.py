@@ -1,14 +1,15 @@
 from django import forms
-from dcim.models import DeviceRole, Location, Site
+from dcim.models import DeviceRole, DeviceType, Location, Site
 from netbox.plugins import get_plugin_config
 from tenancy.models import Tenant, TenantGroup
 from utilities.forms.fields import DynamicModelChoiceField
 
 from .branding import get_brandings
-from .models import BrandingProfile
+from .models import BrandingProfile, TopologySymbol
 from .sections import DEFAULT_DEVICE_COLUMNS, DEVICE_COLUMNS, SECTIONS
+from .symbols import KIND_CHOICES
 
-FORMAT_CHOICES = (("pdf", "PDF"), ("docx", "Word (.docx)"), ("html", "HTML-Vorschau"))
+FORMAT_CHOICES = (("pdf", "PDF"), ("docx", "Word"), ("html", "HTML-Vorschau"), ("drawio", "draw.io"))
 
 
 class ScopeSelectForm(forms.Form):
@@ -63,6 +64,18 @@ class ExportForm(forms.Form):
     )
     rack_devices = forms.BooleanField(required=False, initial=True, label="Geräteliste je Rack")
     rack_pagebreak = forms.BooleanField(required=False, initial=True, label="Seitenumbruch nach jedem Rack")
+
+    topo_details = forms.MultipleChoiceField(
+        choices=(("model", "Modell"), ("primary_ip", "Management-IP"), ("ports", "Ports an Verbindungen")),
+        initial=["primary_ip"],
+        required=False,
+        widget=forms.CheckboxSelectMultiple,
+        label="Beschriftung",
+    )
+    topo_external = forms.BooleanField(
+        required=False, initial=True, label="Provider-Leitungen & Geräte außerhalb anzeigen"
+    )
+    topo_isolated = forms.BooleanField(required=False, initial=False, label="Unverkabelte Geräte anzeigen")
 
     include_empty = forms.BooleanField(required=False, label="Leere Abschnitte trotzdem aufführen")
     include_secrets = forms.BooleanField(required=False, label="Geheimnisse (z.B. WLAN-PSK) mit exportieren")
@@ -128,3 +141,22 @@ class BrandingProfileForm(forms.ModelForm):
                 w.attrs.setdefault("class", "form-check-input")
             else:
                 w.attrs.setdefault("class", "form-control")
+
+
+class TopologySymbolForm(forms.ModelForm):
+    device_type = DynamicModelChoiceField(queryset=DeviceType.objects.all(), required=False, label="Gerätetyp")
+    role = DynamicModelChoiceField(queryset=DeviceRole.objects.all(), required=False, label="Geräterolle")
+    kind = forms.ChoiceField(
+        choices=[("", "Automatisch")] + KIND_CHOICES, required=False, widget=forms.RadioSelect, label="Symbol"
+    )
+
+    class Meta:
+        model = TopologySymbol
+        fields = ("device_type", "role", "kind", "icon")
+        help_texts = {
+            "icon": "PNG, JPG oder GIF, am besten quadratisch mit transparentem Hintergrund. Ersetzt das gewählte Symbol.",
+        }
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.fields["icon"].widget.attrs["class"] = "form-control"

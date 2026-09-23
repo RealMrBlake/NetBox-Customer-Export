@@ -28,6 +28,20 @@ class ScopeSelectView(LoginRequiredMixin, View):
 
 
 class ExportView(LoginRequiredMixin, View):
+    def _drawio(self, request, scope, form, opts):
+        """Nur die Topologie – als editierbare draw.io-Datei (eine Seite je Standort)."""
+        from .topology import build_graphs, render_drawio
+
+        graphs = build_graphs(scope, opts)
+        if not graphs:
+            messages.warning(request, "Keine verkabelten Geräte gefunden – es gibt keine Topologie zu exportieren.")
+            return self._render_form(request, scope, form)
+        content = render_drawio(graphs, show_ports="ports" in (opts.get("topo_details") or []))
+        response = HttpResponse(content, content_type="application/xml")
+        filename = f"topologie_{slugify(str(scope.obj)) or 'export'}_{timezone.localdate():%Y%m%d}.drawio"
+        response["Content-Disposition"] = f'attachment; filename="{filename}"'
+        return response
+
     template_name = "netbox_customer_export/export.html"
 
     def _scope(self, request, kind, pk):
@@ -54,6 +68,8 @@ class ExportView(LoginRequiredMixin, View):
             return self._render_form(request, scope, form)
 
         opts = form.cleaned_data
+        if opts["format"] == "drawio":
+            return self._drawio(request, scope, form, opts)
         blocks = []
         for key in opts["sections"]:
             blocks += SECTIONS[key].func(scope, opts)

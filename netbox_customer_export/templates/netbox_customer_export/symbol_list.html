@@ -1,0 +1,54 @@
+{% extends 'generic/_base.html' %}
+{% block title %}Topologie-Symbole{% endblock %}
+{% block controls %}
+  {% if perms.netbox_customer_export.add_topologysymbol %}
+    <div class="btn-list">
+      <a href="{% url 'plugins:netbox_customer_export:symbol_add' %}" class="btn btn-primary"><i class="mdi mdi-plus-thick"></i> Zuordnung hinzufügen</a>
+    </div>
+  {% endif %}
+{% endblock %}
+{% block content %}
+<style>
+  .ce-gallery { display: grid; grid-template-columns: repeat(auto-fill, minmax(110px, 1fr)); gap: .5rem; }
+  .ce-gallery figure { margin: 0; text-align: center; padding: .5rem; border: 1px solid var(--tblr-border-color); border-radius: .5rem; background: #fff; }
+  .ce-gallery img { width: 64px; height: 64px; }
+  .ce-gallery figcaption { font-size: .75rem; color: #444; margin-top: .25rem; }
+  .ce-sym { width: 40px; height: 40px; object-fit: contain; background: #fff; border-radius: .25rem; }
+</style>
+
+<div class="row g-3 mt-1">
+  <div class="col-xl-7">
+    <div class="card mb-3">
+      <h2 class="card-header"><i class="mdi mdi-shape-outline"></i> Zuordnungen je Gerätetyp</h2>
+      {% include 'netbox_customer_export/_symbol_table.html' with rows=types empty="Noch keine Gerätetypen zugeordnet." %}
+    </div>
+    <div class="card">
+      <h2 class="card-header"><i class="mdi mdi-tag-outline"></i> Zuordnungen je Geräterolle</h2>
+      {% include 'netbox_customer_export/_symbol_table.html' with rows=roles empty="Noch keine Geräterollen zugeordnet." %}
+    </div>
+  </div>
+  <div class="col-xl-5">
+    <div class="card mb-3">
+      <h2 class="card-header"><i class="mdi mdi-information-outline"></i> So wird das Symbol bestimmt</h2>
+      <div class="card-body">
+        <ol class="mb-0">
+          <li><strong>Gerätetyp</strong>-Zuordnung (eigenes Icon oder Symbol)</li>
+          <li><strong>Geräterolle</strong>-Zuordnung</li>
+          <li><strong>Automatisch</strong> anhand von Rolle, Modell und Hersteller, z.B. „Switch“, „Firewall“, „Sophos“, „Access Point“.
+            Patchpanels, Steckdosenleisten, PDUs und USVs werden automatisch ausgeblendet.</li>
+        </ol>
+      </div>
+    </div>
+    <div class="card">
+      <h2 class="card-header"><i class="mdi mdi-view-grid-outline"></i> Eingebaute Symbole</h2>
+      <div class="card-body">
+        <div class="ce-gallery">
+          {% for key, label, url in builtin %}
+            <figure><img src="{{ url }}" alt="{{ label }}"><figcaption>{{ label }}</figcaption></figure>
+          {% endfor %}
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}
