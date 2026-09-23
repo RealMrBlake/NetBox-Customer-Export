@@ -71,6 +71,10 @@ class ExportForm(forms.Form):
         for field in self.fields.values():
             if isinstance(field.widget, (forms.CheckboxInput, forms.CheckboxSelectMultiple)):
                 field.widget.attrs["class"] = "form-check-input"
+            elif isinstance(field.widget, forms.Select):
+                field.widget.attrs["class"] = "form-select"
+            elif isinstance(field.widget, forms.TextInput):
+                field.widget.attrs["class"] = "form-control"
         self.fields["branding"].choices = [(k, b["name"]) for k, b in get_brandings().items()]
         if scope is not None:
             role_ids = scope.devices().values("role")

@@ -1,0 +1,6 @@
+<div class="ce-pills">
+  {% for cb in field %}
+    <input type="checkbox" class="btn-check" name="{{ cb.data.name }}" value="{{ cb.data.value }}" id="{{ cb.id_for_label }}" autocomplete="off"{% if cb.data.selected %} checked{% endif %}>
+    <label class="btn btn-sm btn-outline-primary" for="{{ cb.id_for_label }}">{{ cb.choice_label }}</label>
+  {% empty %}<span class="text-muted small">Keine Einträge im Scope.</span>{% endfor %}
+</div>

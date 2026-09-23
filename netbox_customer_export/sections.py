@@ -19,14 +19,15 @@ class Section:
     group: str
     default: bool
     func: callable
+    hint: str = ""
 
 
 SECTIONS = OrderedDict()
 
 
-def section(key, label, group, default=True):
+def section(key, label, group, default=True, hint=""):
     def deco(func):
-        SECTIONS[key] = Section(key, label, group, default, func)
+        SECTIONS[key] = Section(key, label, group, default, func, hint)
         return func
 
     return deco
@@ -75,7 +76,7 @@ def _empty(opts, blocks, text="Keine Einträge vorhanden."):
 
 # --- Abschnitte -------------------------------------------------------------
 
-@section("overview", "Übersicht & Standortdaten", "Allgemein")
+@section("overview", "Übersicht & Standortdaten", "Allgemein", hint="Kennzahlen, Adressen, Lokationsbaum")
 def overview(scope, opts):
     blocks = [H(1, "Übersicht")]
     counts = [
@@ -118,7 +119,7 @@ def overview(scope, opts):
     return blocks
 
 
-@section("contacts", "Ansprechpartner", "Allgemein")
+@section("contacts", "Ansprechpartner", "Allgemein", hint="Kontakte an Standorten, Lokationen, Mandanten")
 def contacts(scope, opts):
     ContactAssignment = apps.get_model("tenancy", "ContactAssignment")
     targets = [
@@ -143,7 +144,7 @@ def contacts(scope, opts):
     return blocks
 
 
-@section("racks", "Racks (nach Standort & Lokation, inkl. Ansichten)", "Infrastruktur")
+@section("racks", "Racks", "Infrastruktur", hint="Nach Standort & Lokation, mit Rack-Ansicht")
 def racks(scope, opts):
     qs = (
         scope.racks()
@@ -211,7 +212,7 @@ def racks(scope, opts):
     return blocks
 
 
-@section("devices", "Geräte (nach Geräterolle – Auswahl unten)", "Infrastruktur")
+@section("devices", "Geräte", "Infrastruktur", hint="Tabellen je Geräterolle")
 def devices(scope, opts):
     blocks = [H(1, "Geräte")]
     base = scope.devices().select_related(
@@ -234,7 +235,7 @@ def devices(scope, opts):
     return blocks if found else _empty(opts, blocks)
 
 
-@section("power", "Stromversorgung (Power Feeds)", "Infrastruktur", default=False)
+@section("power", "Stromversorgung", "Infrastruktur", default=False, hint="Power Panels & Feeds")
 def power(scope, opts):
     qs = scope.power_feeds().select_related("power_panel", "rack").order_by("power_panel__name", "name")
     blocks = [H(1, "Stromversorgung")]
@@ -249,7 +250,7 @@ def power(scope, opts):
     return blocks
 
 
-@section("vms", "Virtuelle Maschinen", "Infrastruktur", default=False)
+@section("vms", "Virtuelle Maschinen", "Infrastruktur", default=False, hint="Cluster, Ressourcen, IP")
 def vms(scope, opts):
     qs = scope.virtual_machines().select_related("cluster", "role", "platform", "primary_ip4", "primary_ip6").order_by("cluster__name", "name")
     blocks = [H(1, "Virtuelle Maschinen")]
@@ -264,7 +265,7 @@ def vms(scope, opts):
     return blocks
 
 
-@section("vrfs", "VRFs", "Netzwerk")
+@section("vrfs", "VRFs", "Netzwerk", hint="Inkl. Route Targets")
 def vrfs(scope, opts):
     qs = scope.vrfs().select_related("tenant").prefetch_related("import_targets", "export_targets").order_by("name")
     blocks = [H(1, "VRFs")]
@@ -279,7 +280,7 @@ def vrfs(scope, opts):
     return blocks
 
 
-@section("prefixes", "IP-Netze / Präfixe (nach VRF)", "Netzwerk")
+@section("prefixes", "IP-Netze", "Netzwerk", hint="Präfixe gruppiert nach VRF")
 def prefixes(scope, opts):
     qs = scope.prefixes().select_related("vrf", "vlan", "role", "tenant").order_by("vrf__name", "prefix")
     blocks = [H(1, "IP-Netze")]
@@ -296,7 +297,7 @@ def prefixes(scope, opts):
     return blocks
 
 
-@section("vlans", "VLANs", "Netzwerk")
+@section("vlans", "VLANs", "Netzwerk", hint="VID, Name, Gruppe, Rolle")
 def vlans(scope, opts):
     qs = scope.vlans().select_related("group", "site", "role", "tenant").order_by("group__name", "vid")
     blocks = [H(1, "VLANs")]
@@ -311,7 +312,7 @@ def vlans(scope, opts):
     return blocks
 
 
-@section("ips", "IP-Adressen (ausführlich)", "Netzwerk", default=False)
+@section("ips", "IP-Adressen", "Netzwerk", default=False, hint="Ausführlich – kann lang werden")
 def ips(scope, opts):
     qs = scope.ip_addresses().select_related("vrf", "tenant").prefetch_related("assigned_object").order_by("vrf__name", "address")
     blocks = [H(1, "IP-Adressen")]
@@ -328,7 +329,7 @@ def ips(scope, opts):
     return blocks
 
 
-@section("wireless", "WLANs / SSIDs", "Netzwerk", default=False)
+@section("wireless", "WLANs", "Netzwerk", default=False, hint="SSIDs, Authentifizierung")
 def wireless(scope, opts):
     qs = scope.wireless_lans().select_related("group", "vlan").order_by("ssid")
     blocks = [H(1, "WLANs")]
@@ -348,7 +349,7 @@ def wireless(scope, opts):
     return blocks
 
 
-@section("circuits", "Leitungen / Provider", "Netzwerk", default=False)
+@section("circuits", "Leitungen", "Netzwerk", default=False, hint="Provider, Leitungs-ID, Bandbreite")
 def circuits(scope, opts):
     qs = scope.circuits().select_related("provider", "type", "tenant").order_by("provider__name", "cid")
     blocks = [H(1, "Leitungen")]
@@ -381,7 +382,7 @@ DEFAULT_LICENSE_SOURCES = [
 ]
 
 
-@section("licenses", "Lizenzen", "Verträge & Lizenzen")
+@section("licenses", "Lizenzen", "Verträge & Lizenzen", hint="Aus Lizenz-Plugin (z.B. netbox-lifecycle)")
 def licenses(scope, opts):
     sources = get_plugin_config("netbox_customer_export", "license_sources") or DEFAULT_LICENSE_SOURCES
     blocks = [H(1, "Lizenzen")]

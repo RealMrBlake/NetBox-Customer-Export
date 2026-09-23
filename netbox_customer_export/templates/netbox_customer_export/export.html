@@ -1,66 +1,151 @@
 {% extends 'generic/_base.html' %}
 {% load form_helpers %}
-{% block title %}Kundendoku: {{ object }}{% endblock %}
-{% block subtitle %}<div class="text-muted">{{ scope.label }}</div>{% endblock %}
+{% block title %}Kundendokumentation: {{ object }}{% endblock %}
+{% block subtitle %}
+  <div class="text-muted"><span class="badge text-bg-secondary">{{ scope.label }}</span> <a href="{{ object.get_absolute_url }}">{{ object }}</a></div>
+{% endblock %}
 {% block content %}
-<form method="post" class="container-fluid my-3">
+<style>
+  .ce-pills { display: flex; flex-wrap: wrap; gap: .4rem; }
+  .ce-pills .btn { border-radius: 2rem; }
+  .ce-tiles { display: grid; grid-template-columns: repeat(auto-fill, minmax(230px, 1fr)); gap: .5rem; }
+  .ce-tile { display: flex; gap: .6rem; align-items: flex-start; padding: .6rem .75rem; border: 1px solid var(--tblr-border-color); border-radius: .5rem; cursor: pointer; margin: 0; transition: border-color .15s, background-color .15s; }
+  .ce-tile:hover { border-color: var(--tblr-primary); }
+  .ce-tile:has(input:checked) { border-color: var(--tblr-primary); background: rgba(var(--tblr-primary-rgb), .06); }
+  .ce-tile .form-check-input { margin: .15rem 0 0 0; flex-shrink: 0; }
+  .ce-tile small { display: block; color: var(--tblr-secondary); }
+  .ce-group + .ce-group { margin-top: 1rem; }
+  .ce-group-head { display: flex; justify-content: space-between; align-items: baseline; margin-bottom: .4rem; }
+  .ce-group-head h5 { margin: 0; font-size: .8rem; text-transform: uppercase; letter-spacing: .04em; color: var(--tblr-secondary); }
+  .ce-group-head a { font-size: .8rem; cursor: pointer; }
+  .ce-switch { display: flex; gap: .6rem; align-items: center; margin-bottom: .4rem; }
+  .ce-switch .form-check-input { margin: 0; }
+  .ce-label { font-size: .8rem; text-transform: uppercase; letter-spacing: .04em; color: var(--tblr-secondary); margin: .9rem 0 .4rem; }
+  .ce-dim { opacity: .45; pointer-events: none; }
+  .ce-card { transition: opacity .15s; }
+  .ce-actions { position: sticky; bottom: 0; z-index: 10; background: var(--tblr-bg-surface); border-top: 1px solid var(--tblr-border-color); padding: .75rem 1rem; display: flex; justify-content: flex-end; gap: .5rem; }
+  .ce-format .btn { flex: 1; }
+</style>
+
+<form method="post" class="mt-3">
   {% csrf_token %}
   {% if form.errors %}<div class="alert alert-danger">{{ form.errors }}</div>{% endif %}
-  <div class="row">
-    <div class="col-lg-5">
-      <div class="card mb-3">
-        <h2 class="card-header">Dokument</h2>
+
+  <div class="row g-3">
+    {# --- links: Dokument --- #}
+    <div class="col-xl-4">
+      <div class="card">
+        <h2 class="card-header"><i class="mdi mdi-file-document-outline"></i> Dokument</h2>
         <div class="card-body">
-          {% render_field form.format %}
-          {% render_field form.title %}
-          {% render_field form.subtitle %}
-          {% render_field form.author %}
-          {% if form.branding.field.choices|length > 1 %}{% render_field form.branding %}{% else %}<input type="hidden" name="branding" value="{{ form.branding.field.choices.0.0 }}">{% endif %}
-        </div>
-      </div>
-      <div class="card mb-3">
-        <h2 class="card-header">Inhalte</h2>
-        <div class="card-body">
-          {% for group, sections in section_groups.items %}
-            <h6 class="mt-2">{{ group }}</h6>
-            {% for cb in form.sections %}{% for s in sections %}{% if s.key == cb.data.value %}
-              <div class="form-check">{{ cb.tag }} <label class="form-check-label" for="{{ cb.id_for_label }}">{{ cb.choice_label }}</label></div>
-            {% endif %}{% endfor %}{% endfor %}
-          {% endfor %}
-          <hr>
-          <div class="form-check">{{ form.include_empty }} <label class="form-check-label" for="{{ form.include_empty.id_for_label }}">{{ form.include_empty.label }}</label></div>
+          <div class="ce-label mt-0">Format</div>
+          <div class="btn-group w-100 ce-format mb-3" role="group">
+            {% for value, label in form.format.field.choices %}
+              <input type="radio" class="btn-check" name="format" id="fmt-{{ value }}" value="{{ value }}" autocomplete="off"{% if form.format.value == value %} checked{% endif %}>
+              <label class="btn btn-outline-primary" for="fmt-{{ value }}">
+                {% if value == 'pdf' %}<i class="mdi mdi-file-pdf-box"></i>{% elif value == 'docx' %}<i class="mdi mdi-file-word-box"></i>{% else %}<i class="mdi mdi-web"></i>{% endif %}
+                {{ label }}
+              </label>
+            {% endfor %}
+          </div>
+          <div class="mb-3"><label class="form-label" for="{{ form.title.id_for_label }}">Titel</label>{{ form.title }}</div>
+          <div class="mb-3"><label class="form-label" for="{{ form.subtitle.id_for_label }}">Untertitel</label>{{ form.subtitle }}</div>
+          <div class="mb-3"><label class="form-label" for="{{ form.author.id_for_label }}">Erstellt von</label>{{ form.author }}<div class="form-text">Leer = dein Benutzername</div></div>
+          {% if form.branding.field.choices|length > 1 %}
+            <div class="mb-3"><label class="form-label" for="{{ form.branding.id_for_label }}">Design / Firma</label>{{ form.branding }}</div>
+          {% else %}
+            <input type="hidden" name="branding" value="{{ form.branding.field.choices.0.0 }}">
+          {% endif %}
+
+          <div class="ce-label">Optionen</div>
+          <label class="ce-switch">{{ form.include_empty }} {{ form.include_empty.label }}</label>
           {% if form.include_secrets %}
-            <div class="form-check">{{ form.include_secrets }} <label class="form-check-label text-danger" for="{{ form.include_secrets.id_for_label }}">{{ form.include_secrets.label }}</label></div>
+            <label class="ce-switch text-danger">{{ form.include_secrets }} {{ form.include_secrets.label }}</label>
           {% endif %}
         </div>
       </div>
     </div>
-    <div class="col-lg-7">
-      <div class="card mb-3">
-        <h2 class="card-header">Geräte</h2>
+
+    {# --- rechts: Inhalte + Detailoptionen --- #}
+    <div class="col-xl-8">
+      <div class="card">
+        <h2 class="card-header"><i class="mdi mdi-format-list-checks"></i> Inhalte</h2>
         <div class="card-body">
-          <h6>Geräterollen</h6>
-          {% include 'netbox_customer_export/_checkboxes.html' with field=form.roles cols=4 %}
-          <h6 class="mt-3">Spalten</h6>
-          {% include 'netbox_customer_export/_checkboxes.html' with field=form.device_columns cols=4 %}
-          <div class="form-check mt-2">{{ form.group_by_site }} <label class="form-check-label" for="{{ form.group_by_site.id_for_label }}">{{ form.group_by_site.label }}</label></div>
+          {% for group, sections in section_groups.items %}
+            <div class="ce-group" data-ce-group>
+              <div class="ce-group-head">
+                <h5>{{ group }}</h5>
+                <span><a data-ce-all>Alle</a> · <a data-ce-none>Keine</a></span>
+              </div>
+              <div class="ce-tiles">
+                {% for cb in form.sections %}{% for s in sections %}{% if s.key == cb.data.value %}
+                  <label class="ce-tile" for="{{ cb.id_for_label }}">
+                    <input type="checkbox" class="form-check-input" name="sections" value="{{ s.key }}" id="{{ cb.id_for_label }}"{% if cb.data.selected %} checked{% endif %}>
+                    <span><strong>{{ s.label }}</strong>{% if s.hint %}<small>{{ s.hint }}</small>{% endif %}</span>
+                  </label>
+                {% endif %}{% endfor %}{% endfor %}
+              </div>
+            </div>
+          {% endfor %}
         </div>
       </div>
-      <div class="card mb-3">
-        <h2 class="card-header">Racks</h2>
-        <div class="card-body">
-          <div class="form-check">{{ form.rack_svg }} <label class="form-check-label" for="{{ form.rack_svg.id_for_label }}">{{ form.rack_svg.label }}</label></div>
-          <div class="form-check">{{ form.rack_devices }} <label class="form-check-label" for="{{ form.rack_devices.id_for_label }}">{{ form.rack_devices.label }}</label></div>
-          <div class="form-check">{{ form.rack_pagebreak }} <label class="form-check-label" for="{{ form.rack_pagebreak.id_for_label }}">{{ form.rack_pagebreak.label }}</label></div>
-          <h6 class="mt-2">Seiten</h6>
-          {% include 'netbox_customer_export/_checkboxes.html' with field=form.rack_faces cols=6 %}
+
+      <div class="row g-3 mt-0">
+        <div class="col-lg-7">
+          <div class="card ce-card h-100" data-ce-depends="devices">
+            <h2 class="card-header"><i class="mdi mdi-server-network"></i> Geräte</h2>
+            <div class="card-body">
+              <div data-ce-group>
+                <div class="ce-group-head"><h5>Geräterollen</h5><span><a data-ce-all>Alle</a> · <a data-ce-none>Keine</a></span></div>
+                {% include 'netbox_customer_export/_pills.html' with field=form.roles %}
+              </div>
+              <div class="ce-label">Spalten</div>
+              {% include 'netbox_customer_export/_pills.html' with field=form.device_columns %}
+              <label class="ce-switch mt-3">{{ form.group_by_site }} {{ form.group_by_site.label }}</label>
+            </div>
+          </div>
+        </div>
+        <div class="col-lg-5">
+          <div class="card ce-card h-100" data-ce-depends="racks">
+            <h2 class="card-header"><i class="mdi mdi-server"></i> Racks</h2>
+            <div class="card-body">
+              <label class="ce-switch">{{ form.rack_svg }} {{ form.rack_svg.label }}</label>
+              <div class="ce-label">Seiten</div>
+              {% include 'netbox_customer_export/_pills.html' with field=form.rack_faces %}
+              <div class="ce-label">Weiteres</div>
+              <label class="ce-switch">{{ form.rack_devices }} {{ form.rack_devices.label }}</label>
+              <label class="ce-switch">{{ form.rack_pagebreak }} {{ form.rack_pagebreak.label }}</label>
+            </div>
+          </div>
         </div>
       </div>
     </div>
   </div>
-  <div class="text-end">
+
+  <div class="ce-actions mt-3">
     <a href="{{ object.get_absolute_url }}" class="btn btn-outline-secondary">Abbrechen</a>
-    <button class="btn btn-primary"><i class="mdi mdi-download"></i> Exportieren</button>
+    <button class="btn btn-primary"><i class="mdi mdi-download"></i> Dokument erstellen</button>
   </div>
 </form>
+
+<script>
+  (function () {
+    document.querySelectorAll('[data-ce-group]').forEach(function (group) {
+      function setAll(state) {
+        group.querySelectorAll('input[type=checkbox]').forEach(function (cb) { cb.checked = state; cb.dispatchEvent(new Event('change', {bubbles: true})); });
+      }
+      var all = group.querySelector('[data-ce-all]'), none = group.querySelector('[data-ce-none]');
+      if (all) all.addEventListener('click', function () { setAll(true); });
+      if (none) none.addEventListener('click', function () { setAll(false); });
+    });
+    // Detailkarten ausgrauen, wenn der zugehörige Abschnitt abgewählt ist
+    function sync() {
+      document.querySelectorAll('[data-ce-depends]').forEach(function (card) {
+        var cb = document.querySelector('input[name=sections][value="' + card.dataset.ceDepends + '"]');
+        card.classList.toggle('ce-dim', !!cb && !cb.checked);
+      });
+    }
+    document.addEventListener('change', sync);
+    sync();
+  })();
+</script>
 {% endblock %}
