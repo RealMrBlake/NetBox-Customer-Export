@@ -5,6 +5,7 @@ from tenancy.models import Tenant, TenantGroup
 from utilities.forms.fields import DynamicModelChoiceField
 
 from .branding import get_brandings
+from .models import BrandingProfile
 from .sections import DEFAULT_DEVICE_COLUMNS, DEVICE_COLUMNS, SECTIONS
 
 FORMAT_CHOICES = (("pdf", "PDF"), ("docx", "Word (.docx)"), ("html", "HTML-Vorschau"))
@@ -85,3 +86,44 @@ class ExportForm(forms.Form):
             self.fields["subtitle"].initial = f"{scope.label}: {scope.obj}"
         if not get_plugin_config("netbox_customer_export", "allow_secrets"):
             del self.fields["include_secrets"]
+
+
+COLOR_FIELDS = ("primary_color", "accent_color", "header_text_color", "label_bg_color", "stripe_color")
+
+
+class ColorInput(forms.TextInput):
+    """<input type="color">: Anzeige mit #, gespeichert wird ohne #."""
+
+    input_type = "color"
+
+    def format_value(self, value):
+        return f"#{value.lstrip('#')}" if value else None
+
+    def value_from_datadict(self, data, files, name):
+        value = super().value_from_datadict(data, files, name)
+        return value.lstrip("#").upper() if value else value
+
+
+class BrandingProfileForm(forms.ModelForm):
+    class Meta:
+        model = BrandingProfile
+        exclude = ("last_updated",)
+        widgets = {
+            **{f: ColorInput(attrs={"class": "form-control form-control-color"}) for f in COLOR_FIELDS},
+            "extra_css": forms.Textarea(attrs={"rows": 4, "class": "form-control font-monospace"}),
+        }
+        help_texts = {
+            "is_default": "Wird im Exportformular vorausgewählt.",
+            "logo": "PNG oder JPG, erscheint auf dem Deckblatt.",
+            "docx_template": ".docx oder .dotx: Formatvorlagen, Kopf-/Fußzeile und Ränder werden übernommen.",
+            "docx_table_style": "Name wie in Word angezeigt, z.B. Gitternetztabelle 4 – Akzent 1. Leer = eigene Einfärbung.",
+        }
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        for field in self.fields.values():
+            w = field.widget
+            if isinstance(w, forms.CheckboxInput):
+                w.attrs.setdefault("class", "form-check-input")
+            else:
+                w.attrs.setdefault("class", "form-control")

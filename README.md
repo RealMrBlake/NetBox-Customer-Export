@@ -92,8 +92,8 @@ python3 manage.py clearsessions
 sudo systemctl restart netbox netbox-rq
 ```
 
-Die Befehle gehören zum üblichen NetBox-Ablauf nach jeder Plugin-Installation und laufen auch dann fehlerfrei, wenn es nichts zu tun gibt.
-Die aktuelle Version hat noch keine eigenen Datenbanktabellen und keine statischen Dateien. Spätere Versionen können sie aber mitbringen.
+`migrate` ist ab Version 0.2.0 **Pflicht**, denn es legt die Tabelle für die Branding-Profile an. Die übrigen Befehle gehören zum
+üblichen NetBox-Ablauf nach jeder Plugin-Installation.
 
 ## Update
 
@@ -142,11 +142,32 @@ sudo systemctl restart netbox netbox-rq
 
 ## Konfiguration
 
-### Design / Branding
+### Design / Branding in NetBox (empfohlen)
 
-Farben, Schrift, Logo und eine Word-Vorlage lassen sich festlegen, entweder global oder als **mehrere Profile**
-(z.B. pro eigener Firma oder Marke). Bei mehr als einem Profil erscheint im Exportformular das Auswahlfeld „Design / Firma“.
-Die globalen Werte gelten als Basis, jedes Profil überschreibt nur die Werte, die es selbst setzt.
+Unter **Plugins → Branding-Profile** legen Admins Design-Profile direkt in NetBox an:
+
+* Name, Firmenname, Fußzeile und **Logo-Upload** (PNG/JPG)
+* Farben per Farbwähler: Primär, Akzent, Tabellenkopf-Schrift, Beschriftungen, Zebrastreifen
+* Schriftart und -größe
+* **Upload einer Word-Vorlage** (.docx/.dotx), optional mit dem Namen einer Tabellenformatvorlage
+* zusätzliches CSS für PDF und HTML
+* **Vorschau**-Button, der ein Beispieldokument im gewählten Design öffnet
+* Ein Profil lässt sich als **Standard** markieren und ist dann im Exportformular vorausgewählt.
+
+Uploads landen unter `MEDIA_ROOT/customer-export/` (Standard: `/opt/netbox/netbox/media/customer-export/`) und sollten mitgesichert werden.
+Beim Löschen eines Profils werden Logo und Vorlage mit entfernt.
+
+**Berechtigungen:** Superuser dürfen alles. Anderen Benutzern oder Gruppen weist man unter *Admin → Berechtigungen* eine
+Berechtigung für den Objekttyp *Customer Export | Branding-Profil* zu. Mit *Ansehen* sieht man Liste und Vorschau, zum Pflegen
+braucht es zusätzlich *Hinzufügen*, *Ändern* und *Löschen*. Techniker, die nur exportieren, benötigen keine davon.
+
+Sind in NetBox Profile angelegt, erscheinen sie zuerst in der Auswahl „Design / Firma“. Profile aus `configuration.py`
+(siehe unten) werden zusätzlich angeboten, wenn dort `brandings` definiert ist.
+
+### Design / Branding per `configuration.py`
+
+Alternativ oder ergänzend lassen sich Profile in der Konfiguration festlegen, entweder global oder als **mehrere Profile**
+(z.B. pro eigener Firma oder Marke). Die globalen Werte gelten als Basis, jedes Profil überschreibt nur die Werte, die es selbst setzt.
 
 ```python
 PLUGINS_CONFIG = {

@@ -1,0 +1,17 @@
+{% extends 'generic/_base.html' %}
+{% block title %}{{ object }} löschen{% endblock %}
+{% block content %}
+<form method="post" class="mt-3">
+  {% csrf_token %}
+  <div class="card border-danger">
+    <div class="card-body">
+      <p>Soll das Branding-Profil <strong>{{ object }}</strong> wirklich gelöscht werden?
+         Logo und Word-Vorlage des Profils werden ebenfalls entfernt.</p>
+    </div>
+    <div class="card-footer text-end">
+      <a href="{% url 'plugins:netbox_customer_export:branding_list' %}" class="btn btn-outline-secondary">Abbrechen</a>
+      <button class="btn btn-danger"><i class="mdi mdi-trash-can-outline"></i> Löschen</button>
+    </div>
+  </div>
+</form>
+{% endblock %}

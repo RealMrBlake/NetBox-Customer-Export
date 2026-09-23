@@ -1,0 +1,57 @@
+{% extends 'generic/_base.html' %}
+{% block title %}Branding-Profile{% endblock %}
+{% block controls %}
+  {% if perms.netbox_customer_export.add_brandingprofile %}
+    <div class="btn-list">
+      <a href="{% url 'plugins:netbox_customer_export:branding_add' %}" class="btn btn-primary"><i class="mdi mdi-plus-thick"></i> Hinzufügen</a>
+    </div>
+  {% endif %}
+{% endblock %}
+{% block content %}
+<style>
+  .ce-swatch { display: inline-block; width: 1.1rem; height: 1.1rem; border-radius: .25rem; border: 1px solid var(--tblr-border-color); vertical-align: middle; }
+  .ce-logo { max-height: 32px; max-width: 120px; }
+</style>
+<div class="card mt-3">
+  <div class="table-responsive">
+    <table class="table table-hover card-table">
+      <thead>
+        <tr><th>Name</th><th>Logo</th><th>Firma</th><th>Farben</th><th>Schrift</th><th>Word-Vorlage</th><th></th></tr>
+      </thead>
+      <tbody>
+        {% for p in profiles %}
+          <tr>
+            <td>
+              {% if perms.netbox_customer_export.change_brandingprofile %}<a href="{{ p.get_absolute_url }}">{{ p.name }}</a>{% else %}{{ p.name }}{% endif %}
+              {% if p.is_default %}<span class="badge text-bg-green ms-1">Standard</span>{% endif %}
+            </td>
+            <td>{% if p.logo %}<img src="{{ p.logo.url }}" class="ce-logo" alt="">{% else %}<span class="text-muted">—</span>{% endif %}</td>
+            <td>{{ p.company_name|default:"—" }}</td>
+            <td>
+              <span class="ce-swatch" style="background:#{{ p.primary_color }}" title="Primär #{{ p.primary_color }}"></span>
+              <span class="ce-swatch" style="background:#{{ p.accent_color }}" title="Akzent #{{ p.accent_color }}"></span>
+              <span class="ce-swatch" style="background:#{{ p.label_bg_color }}" title="Beschriftungen #{{ p.label_bg_color }}"></span>
+              <span class="ce-swatch" style="background:#{{ p.stripe_color }}" title="Zebrastreifen #{{ p.stripe_color }}"></span>
+            </td>
+            <td>{{ p.font_family }}, {{ p.font_size }} pt</td>
+            <td>{% if p.docx_template %}<i class="mdi mdi-file-word-box text-primary"></i> {{ p.docx_template.name|cut:"customer-export/templates/" }}{% else %}<span class="text-muted">—</span>{% endif %}</td>
+            <td class="text-end text-nowrap">
+              <a href="{% url 'plugins:netbox_customer_export:branding_preview' pk=p.pk %}" target="_blank" class="btn btn-sm btn-outline-secondary" title="Vorschau"><i class="mdi mdi-eye"></i></a>
+              {% if perms.netbox_customer_export.change_brandingprofile %}
+                <a href="{{ p.get_absolute_url }}" class="btn btn-sm btn-warning" title="Bearbeiten"><i class="mdi mdi-pencil"></i></a>
+              {% endif %}
+              {% if perms.netbox_customer_export.delete_brandingprofile %}
+                <a href="{% url 'plugins:netbox_customer_export:branding_delete' pk=p.pk %}" class="btn btn-sm btn-danger" title="Löschen"><i class="mdi mdi-trash-can-outline"></i></a>
+              {% endif %}
+            </td>
+          </tr>
+        {% empty %}
+          <tr><td colspan="7" class="text-center text-muted py-4">
+            Noch keine Branding-Profile angelegt. Bis dahin gelten die Einstellungen aus <code>configuration.py</code>.
+          </td></tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</div>
+{% endblock %}

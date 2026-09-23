@@ -36,8 +36,8 @@ def _normalize(profile):
     return profile
 
 
-def get_brandings():
-    """Alle Profile als {key: dict}. Top-Level-Einstellungen gelten als Basis für jedes Profil."""
+def _config_brandings():
+    """Profile aus PLUGINS_CONFIG. Top-Level-Einstellungen gelten als Basis für jedes Profil."""
     base = dict(DEFAULT_BRANDING)
     for key in DEFAULT_BRANDING:
         value = get_plugin_config(PLUGIN, key)
@@ -47,6 +47,31 @@ def get_brandings():
     if not profiles:
         return {"default": _normalize(base)}
     return {key: _normalize({**base, "name": key, **profile}) for key, profile in profiles.items()}
+
+
+def _db_brandings():
+    """In NetBox gepflegte Profile; das Standardprofil zuerst."""
+    from django.db import DatabaseError
+
+    from .models import BrandingProfile
+
+    try:
+        return {f"db-{p.pk}": _normalize(p.as_branding()) for p in BrandingProfile.objects.all()}
+    except DatabaseError:  # Migration noch nicht ausgeführt
+        return {}
+
+
+def get_brandings():
+    """Alle Profile als {key: dict}: zuerst die aus NetBox, dann die aus der Konfiguration.
+
+    Sobald es Profile in NetBox gibt, entfällt das implizite Konfigurations-Profil "default"
+    (nur Top-Level-Werte, kein "brandings"), damit die Auswahl nicht doppelt ist.
+    """
+    db = _db_brandings()
+    config = _config_brandings()
+    if db and not get_plugin_config(PLUGIN, "brandings"):
+        config = {}
+    return {**db, **config}
 
 
 def get_branding(key=None):
