@@ -146,7 +146,7 @@ def build_graphs(scope, opts):
 
 # --- Layout -------------------------------------------------------------------
 
-CELL_W = 190  # Spaltenbreite
+CELL_W = 174  # Spaltenbreite (enger = Symbole und Schrift im Dokument größer)
 ICON = 64  # Symbolgröße
 LANE = 11  # Abstand der Sammelschienen im Zwischenraum
 PORT_H = 13  # Zeilenhöhe der Port-Beschriftungen
