@@ -75,7 +75,7 @@
   {% elif b.kind == 'paragraph' %}<p>{{ b.text|linebreaksbr }}</p>
   {% elif b.kind == 'table' %}
     <table><thead><tr>{% for h in b.headers %}<th>{{ h }}</th>{% endfor %}</tr></thead>
-    <tbody>{% for row in b.rows %}<tr>{% for c in row %}<td>{{ c }}</td>{% endfor %}</tr>{% endfor %}</tbody></table>
+    <tbody>{% for row in b.rows %}<tr>{% for c in row %}<td>{{ c|linebreaksbr }}</td>{% endfor %}</tr>{% endfor %}</tbody></table>
   {% elif b.kind == 'kv' %}
     <table class="kv"><tbody>{% for row in b.rows %}<tr><td>{{ row.0 }}</td><td>{{ row.1|linebreaksbr }}</td></tr>{% endfor %}</tbody></table>
   {% elif b.kind == 'images' %}

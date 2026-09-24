@@ -402,11 +402,16 @@ DEFAULT_LICENSE_SOURCES = [
 ]
 
 
-@section("licenses", "Lizenzen", "Verträge & Lizenzen", hint="Aus Lizenz-Plugin (z.B. netbox-lifecycle)")
+@section("licenses", "Lizenzen", "Verträge & Lizenzen", hint="Aus NetBox-SLM oder anderem Lizenz-Plugin")
 def licenses(scope, opts):
+    from . import licenses_slm
+
     sources = get_plugin_config("netbox_customer_export", "license_sources") or DEFAULT_LICENSE_SOURCES
     blocks = [H(1, "Lizenzen")]
     found_source = False
+    if licenses_slm.is_installed():
+        found_source = True
+        blocks += licenses_slm.slm_blocks(scope, opts)
     for src in sources:
         try:
             model = apps.get_model(src["model"])
@@ -423,7 +428,7 @@ def licenses(scope, opts):
             cols = src["columns"]
             blocks.append(T([c[0] for c in cols], [[get(o, c[1]) for c in cols] for o in qs]))
     if not found_source:
-        return _empty(opts, blocks, "Kein Lizenz-Plugin installiert (z.B. netbox-lifecycle) – siehe README.")
+        return _empty(opts, blocks, "Kein Lizenz-Plugin installiert (NetBox-SLM oder netbox-lifecycle) – siehe README.")
     return blocks if len(blocks) > 1 else _empty(opts, blocks)
 
 

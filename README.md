@@ -10,7 +10,7 @@ Der Techniker wählt vor dem Export aus, welche Inhalte das Dokument enthalten s
 | Allgemein | Übersicht & Standortdaten (Adresse, Lokationsbaum, Kennzahlen), Ansprechpartner |
 | Infrastruktur | Racks nach Standort → Lokation mit Rack-Ansicht (Vorder-/Rückseite, optional mit Gerätebildern wie in NetBox) und Belegungsliste, Geräte nach **frei wählbaren Geräterollen** (Server, Switche, APs, Router …) mit **frei wählbaren Spalten**, Stromversorgung, VMs |
 | Netzwerk | VRFs (inkl. RTs), Präfixe nach VRF, VLANs, IP-Adressen (ausführlich), WLANs/SSIDs, Leitungen, **Netzwerk-Topologie** |
-| Verträge & Lizenzen | Lizenzen aus einem Lizenz-Plugin (Standard: `netbox-lifecycle`) |
+| Verträge & Lizenzen | Lizenzen aus [NetBox-SLM](https://git.mrblake.cc/MrBlake/NetBox-SLM) (automatisch erkannt) oder einem anderen Lizenz-Plugin (z.B. `netbox-lifecycle`) |
 
 Über **IP-Versionen** (IPv4, IPv6 oder beides) steuert man, welche Adressen im Dokument erscheinen: Management-/OOB-IPs,
 VMs, Topologie-Beschriftung, IP-Netze und IP-Adressen.
@@ -243,6 +243,21 @@ Telefonanlage, IP-Telefon, PC/Client, Drucker, Kamera und „Sonstiges“.
 Patchpanels, Steckdosen(leisten), PDUs, Kabelmanagement und Räume werden automatisch ausgeblendet. Über „In Topologie ausblenden“ lassen sich
 weitere Gerätetypen oder Rollen ausblenden. Eigene Icons liegen unter `MEDIA_ROOT/customer-export/symbols/`.
 Berechtigungen: Objekttyp *Customer Export | Topologie-Symbol*, analog zu den Branding-Profilen.
+
+### Lizenzen (NetBox-SLM)
+
+Ist [NetBox-SLM](https://git.mrblake.cc/MrBlake/NetBox-SLM) installiert, liest der Abschnitt **Lizenzen** dessen Software-Lizenzen
+automatisch. Eine Konfiguration ist nicht nötig. Zum Export gehört eine Lizenz, wenn
+
+* ihre **Installation** auf einem Gerät, einer VM oder einem Cluster im gewählten Standort/Lokation/Mandanten liegt, oder
+* sie dem exportierten **Mandanten** zugeordnet ist, oder
+* sie ohne Mandant einer **Mandantengruppe** zugeordnet ist, die zum Mandanten gehört (auch übergeordnete Gruppen) bzw.
+  beim Export einer Mandantengruppe darin liegt.
+
+Die Tabellen sind nach Hersteller gruppiert und zeigen Lizenz, Produkt/Version, Typ, Anzahl, Laufzeit (inkl. Verlängerung),
+Status (*aktiv*, *läuft in N Tagen ab* ab 90 Tagen vor Ablauf, *abgelaufen*, *unbefristet*), Support, Installation und
+Mandant. Der **Lizenzschlüssel** erscheint nur mit der Option „Geheimnisse exportieren“ (erfordert `allow_secrets: True`).
+Zusätzlich konfigurierte `license_sources` werden weiterhin ausgegeben.
 
 ### Rack-Ansichten
 
