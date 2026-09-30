@@ -1,277 +1,311 @@
 # NetBox Customer Export
 
-NetBox-Plugin (4.6.8 – 4.7.99) zum Export einer verständlichen **Kundendokumentation als PDF oder Word**
-für einen **Standort, eine Lokation, einen Mandanten oder eine Mandantengruppe**.
+Export clear, customer-facing documentation as **PDF or Word** for a **site,
+location, tenant or tenant group**.
 
-Der Techniker wählt vor dem Export aus, welche Inhalte das Dokument enthalten soll:
-
-| Gruppe | Inhalte |
+| | |
 |---|---|
-| Allgemein | Übersicht & Standortdaten (Adresse, Lokationsbaum, Kennzahlen), Ansprechpartner |
-| Infrastruktur | Racks nach Standort → Lokation mit Rack-Ansicht (Vorder-/Rückseite, optional mit Gerätebildern wie in NetBox) und Belegungsliste, Geräte nach **frei wählbaren Geräterollen** (Server, Switche, APs, Router …) mit **frei wählbaren Spalten**, Stromversorgung, VMs |
-| Netzwerk | VRFs (inkl. RTs), Präfixe nach VRF, VLANs, IP-Adressen (ausführlich), WLANs/SSIDs, Leitungen, **Netzwerk-Topologie** |
-| Verträge & Lizenzen | Lizenzen aus [NetBox-SLM](https://git.mrblake.cc/MrBlake/NetBox-SLM) (automatisch erkannt) oder einem anderen Lizenz-Plugin (z.B. `netbox-lifecycle`) |
+| **Plugin name** | `netbox_customer_export` |
+| **Package** | `netbox-customer-export` |
+| **NetBox** | `4.6.8` – `4.7.x` |
+| **Python** | `>=3.10` |
+| **Repository** | <https://git.mrblake.cc/MrBlake/NetBox-Customer-Export> |
 
-Über **IP-Versionen** (IPv4, IPv6 oder beides) steuert man, welche Adressen im Dokument erscheinen: Management-/OOB-IPs,
-VMs, Topologie-Beschriftung, IP-Netze und IP-Adressen.
+## Features
 
-Alle Abfragen laufen über die NetBox-Berechtigungen (`.restrict(user, "view")`). Ein Techniker exportiert also nur, was er auch sehen darf.
+Before exporting, the technician selects which content the document contains:
 
-## Aufruf
+| Group | Content |
+|---|---|
+| General | Overview & site data (address, location tree, key figures), contacts |
+| Infrastructure | Racks by site → location with rack elevation (front/rear, optionally with device images as in NetBox) and occupancy list, devices by **selectable device roles** (servers, switches, APs, routers …) with **selectable columns**, power, VMs |
+| Network | VRFs (incl. RTs), prefixes by VRF, VLANs, IP addresses (detailed), WLANs/SSIDs, circuits, **network topology** |
+| Contracts & licenses | Licenses from [NetBox-SLM](https://git.mrblake.cc/MrBlake/NetBox-SLM) (detected automatically) or another license plugin (e.g. `netbox-lifecycle`) |
 
-* Button **„Kundendoku“** auf Standort-, Lokations-, Mandanten- und Mandantengruppen-Seiten
-* oder Menü **Plugins → Kundendokumentation**
+**IP versions** (IPv4, IPv6 or both) control which addresses appear in the
+document: management/OOB IPs, VMs, topology labels, prefixes and IP addresses.
 
-Formate: **PDF**, **Word** und **HTML-Vorschau** (öffnet in neuem Tab).
+All queries respect NetBox permissions (`.restrict(user, "view")`) — a
+technician only exports what they are allowed to see.
+
+Open it via the **Customer doc** button on site, location, tenant and tenant
+group pages, or via **Plugins → Customer documentation**. Output formats:
+**PDF**, **Word** and **HTML preview** (opens in a new tab).
+
+## Compatibility
+
+- NetBox `4.6.8` – `4.7.x`
+- Python `>=3.10`
+- System libraries for PDF and rack graphics in Word: Pango, Cairo
 
 ## Installation
 
-Die Pfade gehen von einer Standardinstallation unter `/opt/netbox` aus.
+All paths assume a standard installation under `/opt/netbox`.
 
-### 1. Systembibliotheken (für PDF und Rack-Grafiken in Word)
+### 0. System libraries
+
+Required for PDF output and rack graphics in Word:
 
 ```bash
 sudo apt install -y libpango-1.0-0 libpangoft2-1.0-0 libcairo2 git
 ```
 
-### 2. Plugin per Git installieren
+### 1. Install the package
 
 ```bash
-source /opt/netbox/venv/bin/activate
-pip install "netbox-customer-export[all] @ git+https://git.mrblake.cc/MrBlake/NetBox-Customer-Export.git"
+/opt/netbox/venv/bin/pip install --upgrade --force-reinstall \
+  "netbox-customer-export[all] @ git+https://git.mrblake.cc/MrBlake/NetBox-Customer-Export.git@main"
 ```
 
-Die Extras regeln, was mitinstalliert wird:
+The extras control what is installed alongside:
 
-| Extra | Pakete | Formate |
+| Extra | Packages | Formats |
 |---|---|---|
 | `[all]` | weasyprint, python-docx, cairosvg | PDF + Word + HTML |
 | `[pdf]` | weasyprint | PDF + HTML |
 | `[docx]` | python-docx, cairosvg | Word + HTML |
 
-Eine bestimmte Version (Tag oder Commit) installierst du mit `@<tag>` hinter der URL, z.B.
-`git+https://git.mrblake.cc/MrBlake/NetBox-Customer-Export.git@v0.1.0`.
+For reproducible production installs, replace `main` with a release tag or a
+full commit ID.
 
-### 3. In `local_requirements.txt` aufnehmen
+### 2. Add the plugin to `local_requirements.txt`
 
-NetBox' `upgrade.sh` legt das venv bei jedem NetBox-Update neu an. Nur Pakete aus `local_requirements.txt` werden danach
-automatisch wieder installiert. Deshalb das Plugin dort eintragen:
+This makes `upgrade.sh` reinstall the plugin automatically on every NetBox upgrade:
 
 ```bash
-echo 'netbox-customer-export[all] @ git+https://git.mrblake.cc/MrBlake/NetBox-Customer-Export.git' \
-  | sudo tee -a /opt/netbox/local_requirements.txt
+grep -qxF "netbox-customer-export[all] @ git+https://git.mrblake.cc/MrBlake/NetBox-Customer-Export.git@main" /opt/netbox/local_requirements.txt \
+  || echo "netbox-customer-export[all] @ git+https://git.mrblake.cc/MrBlake/NetBox-Customer-Export.git@main" | sudo tee -a /opt/netbox/local_requirements.txt
 ```
 
-Soll eine feste Version eingespielt werden, trägst du dort ebenfalls `@<tag>` ein.
+If the repository is private, the NetBox server needs a read-only deploy token
+or an SSH key. Do not store credentials in `local_requirements.txt`.
 
-### 4. In `configuration.py` aktivieren
+### 3. Enable the plugin
 
-`/opt/netbox/netbox/netbox/configuration.py`:
+In `/opt/netbox/netbox/netbox/configuration.py`:
 
 ```python
-PLUGINS = ["netbox_customer_export"]
+PLUGINS = [
+    "netbox_customer_export",
+]
+
 PLUGINS_CONFIG = {
     "netbox_customer_export": {
-        "company_name": "Meine IT GmbH",  # Branding-Optionen siehe unten
+        "company_name": "My IT Ltd",       # branding options: see below
         "logo_path": "/opt/netbox/branding/logo.png",
-        "footer_text": "Vertraulich",
-        # Offline-Rack-SVG aus Netbox-Utilities (mehrere Geräte pro HE):
-        # Funktion mit Signatur fn(rack, face, user) -> SVG-String
-        "rack_svg_renderer": None,   # z.B. "netbox_utilities.<modul>.<funktion>"
-        "allow_secrets": False,      # WLAN-PSK-Export erlauben
+        "footer_text": "Confidential",
+        # Offline rack SVG from Netbox-Utilities (multiple devices per U):
+        # function with signature fn(rack, face, user) -> SVG string
+        "rack_svg_renderer": None,         # e.g. "netbox_utilities.<module>.<function>"
+        "allow_secrets": False,            # allow exporting WLAN PSKs / license keys
         # "license_sources": [ { "model": "app.model", "device_field": "device",
-        #                        "tenant_field": "tenant", "columns": [("Lizenz", "license"), ...] } ],
-    }
+        #                        "tenant_field": "tenant", "columns": [("License", "license"), ...] } ],
+    },
 }
 ```
 
-### 5. Migrationen, statische Dateien, Neustart
+If other plugins are already configured, add `netbox_customer_export` to the
+existing list and dictionary instead of replacing them.
+
+### 4. Apply migrations, collect static files, restart
 
 ```bash
-source /opt/netbox/venv/bin/activate
 cd /opt/netbox/netbox
-python3 manage.py migrate
-python3 manage.py collectstatic --no-input
-python3 manage.py remove_stale_contenttypes --no-input
-python3 manage.py clearsessions
+/opt/netbox/venv/bin/python manage.py migrate netbox_customer_export
+/opt/netbox/venv/bin/python manage.py collectstatic --no-input
+/opt/netbox/venv/bin/python manage.py remove_stale_contenttypes --no-input
+/opt/netbox/venv/bin/python manage.py clearsessions
 sudo systemctl restart netbox netbox-rq
 ```
 
-`migrate` ist ab Version 0.2.0 **Pflicht**, denn es legt die Tabellen für Branding-Profile und (ab 0.4.0) Topologie-Symbole an. Die übrigen Befehle gehören zum
-üblichen NetBox-Ablauf nach jeder Plugin-Installation.
+`migrate` is mandatory since version 0.2.0: it creates the tables for branding
+profiles and topology symbols.
 
 ## Update
 
 ```bash
-source /opt/netbox/venv/bin/activate
-pip install --upgrade --force-reinstall --no-deps "netbox-customer-export @ git+https://git.mrblake.cc/MrBlake/NetBox-Customer-Export.git"
-```
+/opt/netbox/venv/bin/pip install --upgrade --force-reinstall --no-deps \
+  "netbox-customer-export @ git+https://git.mrblake.cc/MrBlake/NetBox-Customer-Export.git@main"
 
-Danach wie bei der Installation:
-
-```bash
-source /opt/netbox/venv/bin/activate
 cd /opt/netbox/netbox
-python3 manage.py migrate
-python3 manage.py collectstatic --no-input
-python3 manage.py remove_stale_contenttypes --no-input
-python3 manage.py clearsessions
+/opt/netbox/venv/bin/python manage.py migrate netbox_customer_export
+/opt/netbox/venv/bin/python manage.py collectstatic --no-input
 sudo systemctl restart netbox netbox-rq
 ```
 
-`--force-reinstall` ist nötig, weil pip ein Git-Paket mit unveränderter Versionsnummer sonst nicht neu holt.
-`--no-deps` verhindert, dass dabei auch WeasyPrint & Co. neu installiert werden. Bei einer festen Version in
-`local_requirements.txt` dort den Tag anpassen und denselben Befehl mit `@<neuer-tag>` ausführen.
+`--force-reinstall` makes pip pick up branch changes even if the package
+version has not been bumped. `--no-deps` avoids reinstalling WeasyPrint & co.
 
-Installierte Version prüfen:
+When NetBox itself is upgraded, `upgrade.sh` reinstalls the plugin from
+`local_requirements.txt` and runs migrations and `collectstatic`:
 
 ```bash
-pip show netbox-customer-export
+sudo /opt/netbox/upgrade.sh
+sudo systemctl restart netbox netbox-rq
 ```
 
-### NetBox-Update
+If you pinned a release tag in `local_requirements.txt`, change the tag there
+before running the upgrade. Check first that the plugin supports the new NetBox
+version (`min_version`/`max_version`), otherwise NetBox refuses to start.
 
-Beim NetBox-Update installiert `sudo /opt/netbox/upgrade.sh` das Plugin automatisch aus `local_requirements.txt` neu.
-Vorher prüfen, ob die Plugin-Version die neue NetBox-Version unterstützt (`min_version`/`max_version`, aktuell 4.6.8 – 4.7.99).
-Andernfalls verweigert NetBox den Start.
-
-## Deinstallation
+Check the installed version:
 
 ```bash
-# "netbox_customer_export" aus PLUGINS in configuration.py entfernen, dann:
-source /opt/netbox/venv/bin/activate
-pip uninstall netbox-customer-export
+/opt/netbox/venv/bin/pip show netbox-customer-export
+```
+
+## Uninstall
+
+1. Remove `"netbox_customer_export"` from `PLUGINS` and `PLUGINS_CONFIG`.
+2. Remove the line from `/opt/netbox/local_requirements.txt`.
+3. Uninstall the package and restart NetBox:
+
+```bash
+/opt/netbox/venv/bin/pip uninstall netbox-customer-export
 sudo sed -i '/netbox-customer-export/d' /opt/netbox/local_requirements.txt
 sudo systemctl restart netbox netbox-rq
 ```
 
-## Konfiguration
+## Configuration
 
-### Design / Branding in NetBox (empfohlen)
+### Branding in NetBox (recommended)
 
-Unter **Plugins → Branding-Profile** legen Admins Design-Profile direkt in NetBox an:
+Under **Plugins → Branding profiles**, admins create design profiles directly in NetBox:
 
-* Name, Firmenname, Fußzeile und **Logo-Upload** (PNG/JPG)
-* Farben per Farbwähler: Primär, Akzent, Tabellenkopf-Schrift, Beschriftungen, Zebrastreifen
-* Schriftart und -größe
-* **Upload einer Word-Vorlage** (.docx/.dotx), optional mit dem Namen einer Tabellenformatvorlage
-* zusätzliches CSS für PDF und HTML
-* **Vorschau**-Button, der ein Beispieldokument im gewählten Design öffnet
-* Ein Profil lässt sich als **Standard** markieren und ist dann im Exportformular vorausgewählt.
+- name, company name, footer and **logo upload** (PNG/JPG)
+- colours via colour picker: primary, accent, table header text, labels, zebra stripes
+- font family and size
+- **Word template upload** (`.docx`/`.dotx`), optionally with the name of a table style
+- extra CSS for PDF and HTML
+- **Preview** button that opens a sample document in the selected design
+- one profile can be marked as **default** and is preselected in the export form
 
-Uploads landen unter `MEDIA_ROOT/customer-export/` (Standard: `/opt/netbox/netbox/media/customer-export/`) und sollten mitgesichert werden.
-Beim Löschen eines Profils werden Logo und Vorlage mit entfernt.
+Uploads are stored under `MEDIA_ROOT/customer-export/` (default:
+`/opt/netbox/netbox/media/customer-export/`) and should be backed up. Deleting a
+profile also removes its logo and template.
 
-**Berechtigungen:** Superuser dürfen alles. Anderen Benutzern oder Gruppen weist man unter *Admin → Berechtigungen* eine
-Berechtigung für den Objekttyp *Customer Export | Branding-Profil* zu. Mit *Ansehen* sieht man Liste und Vorschau, zum Pflegen
-braucht es zusätzlich *Hinzufügen*, *Ändern* und *Löschen*. Techniker, die nur exportieren, benötigen keine davon.
+**Permissions:** superusers can do everything. Other users or groups need a
+permission for the object type *Customer Export | Branding profile*
+(*View* for list and preview; *Add*, *Change*, *Delete* to maintain profiles).
+Technicians who only export need none of these.
 
-Sind in NetBox Profile angelegt, erscheinen sie zuerst in der Auswahl „Design / Firma“. Profile aus `configuration.py`
-(siehe unten) werden zusätzlich angeboten, wenn dort `brandings` definiert ist.
+Profiles created in NetBox appear first in the "Design / Company" selection;
+profiles from `configuration.py` are offered additionally if `brandings` is defined.
 
-### Design / Branding per `configuration.py`
+### Branding via `configuration.py`
 
-Alternativ oder ergänzend lassen sich Profile in der Konfiguration festlegen, entweder global oder als **mehrere Profile**
-(z.B. pro eigener Firma oder Marke). Die globalen Werte gelten als Basis, jedes Profil überschreibt nur die Werte, die es selbst setzt.
+Profiles can also be defined in the configuration — globally or as **multiple
+profiles** (e.g. per company or brand). Global values are the base; each
+profile only overrides the values it sets.
 
 ```python
 PLUGINS_CONFIG = {
     "netbox_customer_export": {
-        "company_name": "Meine IT GmbH",   # Basis für alle Profile
+        "company_name": "My IT Ltd",   # base for all profiles
         "brandings": {
-            "standard": {"name": "Meine IT GmbH", "logo_path": "/opt/netbox/branding/logo.png"},
+            "standard": {"name": "My IT Ltd", "logo_path": "/opt/netbox/branding/logo.png"},
             "partner": {
-                "name": "Partner AG",
-                "company_name": "Partner AG",
+                "name": "Partner Inc",
+                "company_name": "Partner Inc",
                 "logo_path": "/opt/netbox/branding/partner.png",
                 "primary_color": "#C00000",
                 "accent_color": "#E46C0A",
                 "font_family": "Arial",
                 "docx_template": "/opt/netbox/branding/partner.dotx",
-                "docx_table_style": "Gitternetztabelle 4 – Akzent 1",
+                "docx_table_style": "Grid Table 4 - Accent 1",
             },
         },
-    }
+    },
 }
 ```
 
-| Schlüssel | Standard | Wirkung |
+| Key | Default | Effect |
 |---|---|---|
-| `name` | Profilschlüssel | Anzeigename im Formular |
-| `company_name`, `logo_path`, `footer_text` | – | Deckblatt und Fußzeile |
-| `primary_color` | `1F4E79` | Überschriften, Tabellenköpfe |
-| `accent_color` | `2E75B6` | Unterüberschriften (Ebene 3/4) |
-| `header_text_color` | `FFFFFF` | Schrift im Tabellenkopf |
-| `label_bg_color` | `DEEAF6` | Beschriftungsspalte der Detailtabellen |
-| `stripe_color` | `F3F7FB` | Zebrastreifen (PDF) |
-| `font_family`, `font_size` | `Calibri`, `10` | Grundschrift |
-| `docx_template` | – | `.docx`/`.dotx`: Formatvorlagen, Kopf-/Fußzeile und Ränder werden übernommen, der Textinhalt der Vorlage wird verworfen |
-| `docx_table_style` | – | Name einer Tabellenformatvorlage aus der Vorlage (so, wie er in Word angezeigt wird). Ist er gesetzt, entfällt die eigene Einfärbung. |
-| `extra_css` | – | zusätzliches CSS für PDF/HTML |
+| `name` | profile key | Display name in the form |
+| `company_name`, `logo_path`, `footer_text` | – | Cover page and footer |
+| `primary_color` | `1F4E79` | Headings, table headers |
+| `accent_color` | `2E75B6` | Sub-headings (level 3/4) |
+| `header_text_color` | `FFFFFF` | Table header text |
+| `label_bg_color` | `DEEAF6` | Label column of detail tables |
+| `stripe_color` | `F3F7FB` | Zebra stripes (PDF) |
+| `font_family`, `font_size` | `Calibri`, `10` | Base font |
+| `docx_template` | – | `.docx`/`.dotx`: styles, header/footer and margins are used, the template's text content is discarded |
+| `docx_table_style` | – | Name of a table style from the template (as shown in Word). If set, the plugin's own colouring is skipped. |
+| `extra_css` | – | Extra CSS for PDF/HTML |
 
-Farben werden als Hex angegeben, mit oder ohne `#`. Ungültige Werte führen beim Export zu einer klaren Fehlermeldung.
-Mit einer Word-Vorlage bestimmt die Vorlage die Überschriften-Formate. Ohne Vorlage färbt das Plugin die Überschriften selbst ein.
-Bringt die Vorlage eine eigene Fußzeile mit, wird diese beibehalten.
+Colours are hex values with or without `#`; invalid values produce a clear
+error message on export. With a Word template, the template defines the heading
+styles and its own footer is kept.
 
-### Netzwerk-Topologie
+### Network topology
 
-Der Abschnitt **Netzwerk-Topologie** zeichnet je Standort ein Diagramm mit Symbolen im Stil von Cisco Packet Tracer:
+The **Network topology** section draws one diagram per site with icons in the
+style of Cisco Packet Tracer:
 
-* Verbindungen stammen aus den **Kabelpfaden** in NetBox. Pfade über Patchpanels werden bis zum Endgerät verfolgt.
-* Die Anordnung von oben nach unten ergibt sich aus der Verkabelung: Provider → Firewall/Router → Core → Access → Endgeräte.
-  Die Reihenfolge innerhalb einer Ebene wird so optimiert, dass sich möglichst wenige Leitungen kreuzen.
-* Leitungen werden **rechtwinklig** über eigene Sammelschienen geführt, farbig je übergeordnetem Gerät. Portnamen stehen
-  direkt am Zielgerät, Mehrfach-Uplinks werden dicker gezeichnet und als „2×“ markiert.
-* **Umfang** wählbar: *Gesamtes Netzwerk* (eine Seite je Standort) und/oder *Je Rack* (eine Seite je Rack). In der
-  Rack-Ansicht erscheinen direkt verbundene Geräte außerhalb des Racks blass und gestrichelt, mit Angabe ihres Racks.
-* Jede Topologie steht auf einer **eigenen Seite im Querformat** (PDF und Word) und wird so groß wie möglich skaliert.
-  Danach geht das Dokument im Hochformat weiter.
-* Provider-Leitungen erscheinen als Wolke, Geräte anderer Standorte gestrichelt (abschaltbar).
-* Beschriftung wählbar: Management-IP, Modell, Ports an den Verbindungen.
-* Gerätenamen über 15 Zeichen (z.B. länger als „poller-thlg-ase“) werden umgebrochen, bevorzugt an `-`, `_`, `.` oder Leerzeichen.
+- Links come from NetBox **cable paths**; paths through patch panels are traced to the end device.
+- The top-to-bottom layout follows the cabling: provider → firewall/router → core → access → end devices, with ordering optimised for as few crossings as possible.
+- Lines are routed **orthogonally** on bus bars, coloured per upstream device. Port names sit at the target device; multiple uplinks are drawn thicker and marked "2×".
+- **Scope**: *entire network* (one page per site) and/or *per rack* (one page per rack). In the rack view, directly connected devices outside the rack appear faded and dashed, with their rack.
+- Each topology gets its **own landscape page** (PDF and Word) and is scaled as large as possible.
+- Provider circuits appear as a cloud, devices of other sites dashed (can be disabled).
+- Selectable labels: management IP, model, ports on links.
+- Device names longer than 15 characters are wrapped, preferably at `-`, `_`, `.` or spaces.
 
-**Symbole** (Menü **Plugins → Topologie-Symbole**, oder Button „Topologie-Symbol“ auf Gerätetyp- und Geräterollen-Seiten):
+**Symbols** (menu **Plugins → Topology symbols**, or the "Topology symbol"
+button on device type and device role pages):
 
-1. Zuordnung je **Gerätetyp**: eingebautes Symbol wählen oder **eigenes Icon hochladen** (PNG/JPG, idealerweise transparent)
-2. Zuordnung je **Geräterolle**
-3. sonst **automatisch**, zuerst anhand der Rolle, dann anhand von Modell und Hersteller
+1. per **device type**: choose a built-in symbol or **upload a custom icon** (PNG/JPG, ideally transparent)
+2. per **device role**
+3. otherwise **automatic**, first by role, then by model and manufacturer
 
-Eingebaute Symbole: Internet/Provider, Modem/NTU/RAD, Firewall, Router, Layer-3-Switch, Switch, Funkstrecke,
-WLAN-Controller, PoE-Injektor, Access Point, Server, Storage/SAN (MSA), NAS, Bandlaufwerk/Tape Library, USV/ATS,
-Telefonanlage, IP-Telefon, PC/Client, Drucker, Kamera und „Sonstiges“.
+Built-in symbols: internet/provider, modem/NTU, firewall, router, layer-3
+switch, switch, radio link, WLAN controller, PoE injector, access point, server,
+storage/SAN, NAS, tape library, UPS/ATS, PBX, IP phone, PC/client, printer,
+camera and "other".
 
-Patchpanels, Steckdosen(leisten), PDUs, Kabelmanagement und Räume werden automatisch ausgeblendet. Über „In Topologie ausblenden“ lassen sich
-weitere Gerätetypen oder Rollen ausblenden. Eigene Icons liegen unter `MEDIA_ROOT/customer-export/symbols/`.
-Berechtigungen: Objekttyp *Customer Export | Topologie-Symbol*, analog zu den Branding-Profilen.
+Patch panels, power strips, PDUs, cable management and rooms are hidden
+automatically; further device types or roles can be hidden via "Hide in
+topology". Custom icons are stored under `MEDIA_ROOT/customer-export/symbols/`.
+Permissions: object type *Customer Export | Topology symbol*, analogous to
+branding profiles.
 
-### Lizenzen (NetBox-SLM)
+### Licenses (NetBox-SLM)
 
-Ist [NetBox-SLM](https://git.mrblake.cc/MrBlake/NetBox-SLM) installiert, liest der Abschnitt **Lizenzen** dessen Software-Lizenzen
-automatisch. Eine Konfiguration ist nicht nötig. Zum Export gehört eine Lizenz, wenn
+If [NetBox-SLM](https://git.mrblake.cc/MrBlake/NetBox-SLM) is installed, the
+**Licenses** section reads its software licenses automatically — no
+configuration required. A license belongs to the export if
 
-* ihre **Installation** auf einem Gerät, einer VM oder einem Cluster im gewählten Standort/Lokation/Mandanten liegt, oder
-* sie dem exportierten **Mandanten** zugeordnet ist, oder
-* sie ohne Mandant einer **Mandantengruppe** zugeordnet ist, die zum Mandanten gehört (auch übergeordnete Gruppen) bzw.
-  beim Export einer Mandantengruppe darin liegt.
+- its **installation** is on a device, VM or cluster in the selected site/location/tenant, or
+- it is assigned to the exported **tenant**, or
+- it has no tenant but is assigned to a **tenant group** the tenant belongs to (including parent groups), or that lies within the exported tenant group.
 
-Die Tabellen sind nach Hersteller gruppiert und zeigen Lizenz, Produkt/Version, Typ, Anzahl, Laufzeit (inkl. Verlängerung),
-Status (*aktiv*, *läuft in N Tagen ab* ab 90 Tagen vor Ablauf, *abgelaufen*, *unbefristet*), Support, Installation und
-Mandant. Der **Lizenzschlüssel** erscheint nur mit der Option „Geheimnisse exportieren“ (erfordert `allow_secrets: True`).
-Zusätzlich konfigurierte `license_sources` werden weiterhin ausgegeben.
+Tables are grouped by manufacturer and show license, product/version, type,
+quantity, term (incl. renewal), status (*active*, *expires in N days* from 90
+days before expiry, *expired*, *perpetual*), support, installation and tenant.
+The **license key** only appears with the "Export secrets" option (requires
+`allow_secrets: True`). Additionally configured `license_sources` are still output.
 
-### Rack-Ansichten
+### Rack elevations
 
-Ohne Konfiguration nutzt das Plugin NetBox' eigenen `dcim.svg.RackElevationSVG`. Er läuft im selben Prozess, also ohne HTTP-Aufruf der API.
-Soll stattdessen der Offline-Renderer aus [Netbox-Utilities](https://git.mrblake.cc/MrBlake/Netbox-Utilities) verwendet werden,
-trägt man unter `rack_svg_renderer` den Pfad zu dessen Render-Funktion ein. Falls die Signatur abweicht, braucht es einen kleinen Adapter.
+By default the plugin uses NetBox's own `dcim.svg.RackElevationSVG` in-process
+(no HTTP call to the API). To use the offline renderer from
+[Netbox-Utilities](https://git.mrblake.cc/MrBlake/Netbox-Utilities) instead,
+set `rack_svg_renderer` to the path of its render function. A small adapter is
+needed if the signature differs.
 
-## Architektur
+## Architecture
 
 ```
-scope.py        welche Objekte gehören zum Scope (Standort/Lokation/Mandant/-gruppe)
-sections.py     Registry der Abschnitte (@section-Dekorator) → neutrale Blöcke
-blocks.py       Dokumentmodell (Überschrift, Tabelle, Key/Value, Bilder, Umbruch)
-renderers/      html (→ WeasyPrint-PDF), docx (python-docx + cairosvg)
+scope.py        which objects belong to the scope (site/location/tenant/group)
+sections.py     registry of sections (@section decorator) → neutral blocks
+blocks.py       document model (heading, table, key/value, images, page break)
+renderers/      html (→ WeasyPrint PDF), docx (python-docx + cairosvg)
 ```
 
-Einen neuen Abschnitt hinzufügen: in `sections.py` eine Funktion mit `@section("key", "Label", "Gruppe")` schreiben, die eine Liste von Blöcken zurückgibt. Er erscheint automatisch im Formular und in beiden Formaten.
+To add a section, write a function in `sections.py` decorated with
+`@section("key", "Label", "Group")` that returns a list of blocks. It appears
+automatically in the form and in both output formats.
+
+## License
+
+Apache License 2.0.
