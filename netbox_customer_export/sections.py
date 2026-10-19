@@ -253,6 +253,17 @@ def devices(scope, opts):
     return blocks if found else _empty(opts, blocks)
 
 
+@section("disks", "Datenträger & RAID", "Infrastruktur", default=False, hint="Aus Netbox-Utilities (falls installiert)")
+def disks(scope, opts):
+    from . import disks_utilities
+
+    blocks = [H(1, "Datenträger & RAID")]
+    if not disks_utilities.is_installed():
+        return _empty(opts, blocks, "Netbox-Utilities mit Datenträger-Verwaltung ist nicht installiert – siehe README.")
+    blocks += disks_utilities.disk_blocks(scope, opts)
+    return blocks if len(blocks) > 1 else _empty(opts, blocks)
+
+
 @section("power", "Stromversorgung", "Infrastruktur", default=False, hint="Power Panels & Feeds")
 def power(scope, opts):
     qs = scope.power_feeds().select_related("power_panel", "rack").order_by("power_panel__name", "name")

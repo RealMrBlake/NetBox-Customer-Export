@@ -8,7 +8,7 @@ Der Techniker wählt vor dem Export aus, welche Inhalte das Dokument enthalten s
 | Gruppe | Inhalte |
 |---|---|
 | Allgemein | Übersicht & Standortdaten (Adresse, Lokationsbaum, Kennzahlen), Ansprechpartner |
-| Infrastruktur | Racks nach Standort → Lokation mit Rack-Ansicht (Vorder-/Rückseite, optional mit Gerätebildern wie in NetBox) und Belegungsliste, Geräte nach **frei wählbaren Geräterollen** (Server, Switche, APs, Router …) mit **frei wählbaren Spalten**, Stromversorgung, VMs |
+| Infrastruktur | Racks nach Standort → Lokation mit Rack-Ansicht (Vorder-/Rückseite, optional mit Gerätebildern wie in NetBox) und Belegungsliste, Geräte nach **frei wählbaren Geräterollen** (Server, Switche, APs, Router …) mit **frei wählbaren Spalten**, Stromversorgung, VMs, **Datenträger & RAID** aus [Netbox-Utilities](https://git.mrblake.cc/MrBlake/Netbox-Utilities) (falls installiert) |
 | Netzwerk | VRFs (inkl. RTs), Präfixe nach VRF, VLANs, IP-Adressen (ausführlich), WLANs/SSIDs, Leitungen, **Netzwerk-Topologie** |
 | Verträge & Lizenzen | Lizenzen aus [NetBox-SLM](https://git.mrblake.cc/MrBlake/NetBox-SLM) (automatisch erkannt) oder einem anderen Lizenz-Plugin (z.B. `netbox-lifecycle`) |
 
@@ -258,6 +258,15 @@ Die Tabellen sind nach Hersteller gruppiert und zeigen Lizenz, Produkt/Version, 
 Status (*aktiv*, *läuft in N Tagen ab* ab 90 Tagen vor Ablauf, *abgelaufen*, *unbefristet*), Support, Installation und
 Mandant. Der **Lizenzschlüssel** erscheint nur mit der Option „Geheimnisse exportieren“ (erfordert `allow_secrets: True`).
 Zusätzlich konfigurierte `license_sources` werden weiterhin ausgegeben.
+
+### Datenträger & RAID (Netbox-Utilities)
+
+Ist [Netbox-Utilities](https://git.mrblake.cc/MrBlake/Netbox-Utilities) mit der Datenträger-Verwaltung installiert, gibt der
+Abschnitt **Datenträger & RAID** (standardmäßig aus) je Gerät im Scope aus: belegte Steckplätze, Rohkapazität, Hot Spares und
+defekte Datenträger, die RAID-Gruppen (Level, Anzahl, nutzbare Kapazität, Ausfalltoleranz) sowie eine Tabelle aller eingebauten
+Datenträger mit Steckplatz, Status, Typ, Modell, Größe, Seriennummer, Firmware, RAID-Gruppe, Garantie und Warnungen
+(defekt, Garantie abgelaufen/endet bald, zu alt – Schwellwerte aus der Utilities-Konfiguration). Ausgebaute Datenträger
+(Historie) erscheinen nicht. Ohne das Plugin bleibt der Abschnitt leer.
 
 ### Rack-Ansichten
 
