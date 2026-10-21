@@ -52,7 +52,9 @@ def disk_blocks(scope, opts):
     for disk in disks:
         by_device.setdefault(disk.device, []).append(disk)
 
-    headers = ["Steckplatz", "Status", "Typ", "Hersteller / Modell", "Größe", "Seriennummer", "Firmware", "RAID", "Garantie bis", "Hinweise"]
+    show_installed = bool(opts.get("disk_install_date"))
+    headers = ["Steckplatz", "Status", "Typ", "Hersteller / Modell", "Größe", "Seriennummer", "Firmware", "RAID"]
+    headers += ["Eingebaut"] * show_installed + ["Garantie bis", "Hinweise"]
     blocks = []
     for device, items in by_device.items():
         slots = sum(b.slot_count for b in DiskBayLayout.objects.filter(device=device))
@@ -84,7 +86,7 @@ def disk_blocks(scope, opts):
         rows = []
         for d in items:
             hints = "\n".join(text for _lvl, text in helpers.disk_warnings(d, **warn_cfg))
-            rows.append([
+            row = [
                 _slot(d),
                 d.get_status_display(),
                 " / ".join(x for x in (d.get_disk_type_display(), d.get_interface_display()) if x),
@@ -93,8 +95,9 @@ def disk_blocks(scope, opts):
                 d.serial,
                 d.firmware,
                 d.raid_group,
-                _date(d.warranty_end),
-                hints,
-            ])
+            ]
+            if show_installed:
+                row.append(_date(getattr(d, "install_date", None)))
+            rows.append(row + [_date(d.warranty_end), hints])
         blocks.append(T(headers, rows))
     return blocks

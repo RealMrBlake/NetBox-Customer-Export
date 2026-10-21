@@ -290,7 +290,7 @@ The **license key** only appears with the "Export secrets" option (requires
 If [Netbox-Utilities](https://git.mrblake.cc/MrBlake/Netbox-Utilities) with disk management is installed, the
 **Disks & RAID** section (off by default) lists for each device in scope: occupied slots, raw capacity, hot spares and
 failed disks, the RAID groups (level, count, usable capacity, fault tolerance) and a table of all installed disks with
-slot, status, type, model, size, serial number, firmware, RAID group, warranty and warnings (failed, warranty
+slot, status, type, model, size, serial number, firmware, RAID group, optionally the install date, warranty and warnings (failed, warranty
 expired/expiring soon, too old – thresholds from the Utilities configuration). Removed disks (history) are not shown.
 Without the plugin the section stays empty.
 
