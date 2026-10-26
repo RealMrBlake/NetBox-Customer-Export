@@ -1,6 +1,6 @@
-<div class="table-responsive">
+{% load i18n %}<div class="table-responsive">
   <table class="table table-hover card-table align-middle">
-    <thead><tr><th style="width:56px"></th><th>Zuordnung</th><th>Symbol</th><th></th></tr></thead>
+    <thead><tr><th style="width:56px"></th><th>{% trans "Assignment" %}</th><th>{% trans "Symbol" %}</th><th></th></tr></thead>
     <tbody>
       {% for s, preview in rows %}
         <tr>
@@ -9,13 +9,13 @@
             {% if s.device_type %}<a href="{{ s.device_type.get_absolute_url }}">{{ s.device_type.manufacturer }} {{ s.device_type.model }}</a>
             {% else %}<a href="{{ s.role.get_absolute_url }}">{{ s.role }}</a>{% endif %}
           </td>
-          <td>{% if s.icon %}<span class="badge text-bg-blue">Eigenes Icon</span>{% endif %} {{ s.get_kind_display }}</td>
+          <td>{% if s.icon %}<span class="badge text-bg-blue">{% trans "Custom icon" %}</span>{% endif %} {{ s.get_kind_display }}</td>
           <td class="text-end text-nowrap">
             {% if perms.netbox_customer_export.change_topologysymbol %}
-              <a href="{{ s.get_absolute_url }}" class="btn btn-sm btn-warning" title="Bearbeiten"><i class="mdi mdi-pencil"></i></a>
+              <a href="{{ s.get_absolute_url }}" class="btn btn-sm btn-warning" title="{% trans "Edit" %}"><i class="mdi mdi-pencil"></i></a>
             {% endif %}
             {% if perms.netbox_customer_export.delete_topologysymbol %}
-              <a href="{% url 'plugins:netbox_customer_export:symbol_delete' pk=s.pk %}" class="btn btn-sm btn-danger" title="Löschen"><i class="mdi mdi-trash-can-outline"></i></a>
+              <a href="{% url 'plugins:netbox_customer_export:symbol_delete' pk=s.pk %}" class="btn btn-sm btn-danger" title="{% trans "Delete" %}"><i class="mdi mdi-trash-can-outline"></i></a>
             {% endif %}
           </td>
         </tr>

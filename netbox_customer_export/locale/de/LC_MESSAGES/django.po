@@ -1,0 +1,1341 @@
+# German translation of netbox-customer-export.
+# This file is distributed under the same license as the netbox-customer-export package.
+#
+msgid ""
+msgstr ""
+"Project-Id-Version: netbox-customer-export\n"
+"Report-Msgid-Bugs-To: \n"
+"POT-Creation-Date: 2026-10-26 20:23+0000\n"
+"PO-Revision-Date: 2026-10-26 20:30+0000\n"
+"Last-Translator: \n"
+"Language-Team: German\n"
+"Language: de\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"Plural-Forms: nplurals=2; plural=(n != 1);\n"
+
+#: __init__.py:7
+msgid "Customer Export"
+msgstr "Kunden-Export"
+
+#: __init__.py:8
+msgid "Export customer documentation as PDF or Word"
+msgstr "Kundendokumentation als PDF oder Word exportieren"
+
+#: blocks.py:88 licenses_slm.py:91
+msgid "Yes"
+msgstr "Ja"
+
+#: blocks.py:88 licenses_slm.py:91
+msgid "No"
+msgstr "Nein"
+
+#: branding_views.py:45
+#, python-format
+msgid "Branding profile “%(name)s” saved."
+msgstr "Branding-Profil „%(name)s“ gespeichert."
+
+#: branding_views.py:63
+#, python-format
+msgid "Branding profile “%(name)s” deleted."
+msgstr "Branding-Profil „%(name)s“ gelöscht."
+
+#: branding_views.py:75 sections.py:100
+msgid "Overview"
+msgstr "Übersicht"
+
+#: branding_views.py:76 forms.py:17 scope.py:20 sections.py:68 sections.py:145
+#: sections.py:340
+msgid "Site"
+msgstr "Standort"
+
+#: branding_views.py:76
+msgid "Sample site"
+msgstr "Musterstandort"
+
+#: branding_views.py:76 disks_utilities.py:58 licenses_slm.py:110
+#: sections.py:71 sections.py:119 sections.py:134 sections.py:185
+#: sections.py:277 sections.py:292 sections.py:325 sections.py:340
+#: sections.py:361 sections.py:371 sections.py:393
+msgid "Status"
+msgstr "Status"
+
+#: branding_views.py:76
+msgid "Active"
+msgstr "Aktiv"
+
+#: branding_views.py:76 sections.py:361
+msgid "Address"
+msgstr "Anschrift"
+
+#: branding_views.py:76
+msgid ""
+"1 Sample Street\n"
+"Sample City"
+msgstr "Musterstraße 1\n12345 Musterstadt"
+
+#: branding_views.py:77 sections.py:104 sections.py:235 sections.py:237
+#: templates/netbox_customer_export/export.html:100
+msgid "Devices"
+msgstr "Geräte"
+
+#: branding_views.py:79 models.py:16 sections.py:66 sections.py:162
+#: sections.py:292 sections.py:307 sections.py:340
+#: templates/netbox_customer_export/branding_list.html:20
+msgid "Name"
+msgstr "Name"
+
+#: branding_views.py:79 disks_utilities.py:58 sections.py:67 sections.py:223
+msgid "Manufacturer / model"
+msgstr "Hersteller / Modell"
+
+#: branding_views.py:79 sections.py:70
+msgid "Rack / U"
+msgstr "Rack / HE"
+
+#: branding_views.py:79 forms.py:72 sections.py:73
+msgid "Management IP"
+msgstr "Management-IP"
+
+#: branding_views.py:81 branding_views.py:82 branding_views.py:83
+#, python-format
+msgid "Rack A / U %(u)s"
+msgstr "Rack A / HE %(u)s"
+
+#: branding_views.py:86
+msgid "This is how headings, tables and body text look with this profile."
+msgstr "So sehen Überschriften, Tabellen und Fließtext mit diesem Profil aus."
+
+#: branding_views.py:89
+msgid "Network documentation preview"
+msgstr "Netzwerkdokumentation Vorschau"
+
+#: branding_views.py:90
+msgid "Sample customer"
+msgstr "Beispielkunde"
+
+#: disks_utilities.py:58
+msgid "Slot"
+msgstr "Steckplatz"
+
+#: disks_utilities.py:58 licenses_slm.py:110 sections.py:187 sections.py:277
+#: sections.py:393
+msgid "Type"
+msgstr "Typ"
+
+#: disks_utilities.py:58
+msgid "Size"
+msgstr "Größe"
+
+#: disks_utilities.py:58 sections.py:75
+msgid "Serial number"
+msgstr "Seriennummer"
+
+#: disks_utilities.py:58
+msgid "Firmware"
+msgstr "Firmware"
+
+#: disks_utilities.py:59
+msgid "Installed"
+msgstr "Eingebaut"
+
+#: disks_utilities.py:59
+msgid "Warranty until"
+msgstr "Garantie bis"
+
+#: disks_utilities.py:59
+msgid "Notes"
+msgstr "Hinweise"
+
+#: disks_utilities.py:66
+msgid "Slots used"
+msgstr "Steckplätze belegt"
+
+#: disks_utilities.py:67
+msgid "Raw capacity"
+msgstr "Rohkapazität"
+
+#: disks_utilities.py:68
+msgid "Hot spares"
+msgstr "Hot Spares"
+
+#: disks_utilities.py:69
+msgid "Failed"
+msgstr "Defekt"
+
+#: disks_utilities.py:86
+msgid "RAID group"
+msgstr "RAID-Gruppe"
+
+#: disks_utilities.py:86
+msgid "Level"
+msgstr "Level"
+
+#: disks_utilities.py:86 templates/netbox_customer_export/export.html:128
+msgid "Disks"
+msgstr "Datenträger"
+
+#: disks_utilities.py:86
+msgid "Usable"
+msgstr "Nutzbar"
+
+#: disks_utilities.py:86
+msgid "Fault tolerance"
+msgstr "Ausfalltoleranz"
+
+#: disks_utilities.py:86 sections.py:78 sections.py:126 sections.py:134
+#: sections.py:191 sections.py:307 sections.py:325 sections.py:340
+#: sections.py:361 sections.py:393 sections.py:412
+msgid "Description"
+msgstr "Beschreibung"
+
+#: forms.py:13
+msgid "HTML preview"
+msgstr "HTML-Vorschau"
+
+#: forms.py:18 scope.py:21 sections.py:69 sections.py:134 sections.py:146
+msgid "Location"
+msgstr "Lokation"
+
+#: forms.py:19 licenses_slm.py:110 scope.py:22 sections.py:77 sections.py:121
+#: sections.py:147 sections.py:190 sections.py:307
+msgid "Tenant"
+msgstr "Mandant"
+
+#: forms.py:20 scope.py:23
+msgid "Tenant group"
+msgstr "Mandantengruppe"
+
+#: forms.py:26
+msgid "Select exactly one scope."
+msgstr "Bitte genau einen Scope auswählen."
+
+#: forms.py:32 templates/netbox_customer_export/export.html:41
+msgid "Format"
+msgstr "Format"
+
+#: forms.py:33
+msgid "Title"
+msgstr "Titel"
+
+#: forms.py:34
+msgid "Subtitle"
+msgstr "Untertitel"
+
+#: forms.py:35 renderers/docx.py:107
+#: templates/netbox_customer_export/document.html:64
+msgid "Created by"
+msgstr "Erstellt von"
+
+#: forms.py:36
+msgid "Design / company"
+msgstr "Design / Firma"
+
+#: forms.py:42 templates/netbox_customer_export/export.html:76
+msgid "Contents"
+msgstr "Inhalte"
+
+#: forms.py:46
+msgid "Device roles"
+msgstr "Geräterollen"
+
+#: forms.py:53
+msgid "Device columns"
+msgstr "Gerätespalten"
+
+#: forms.py:55
+msgid "Group devices by site"
+msgstr "Geräte nach Standort gruppieren"
+
+#: forms.py:57
+msgid "Show disk installation date"
+msgstr "Einbaudatum der Datenträger anzeigen"
+
+#: forms.py:59
+msgid "Embed rack elevations (SVG)"
+msgstr "Rack-Ansichten (SVG) einbetten"
+
+#: forms.py:60
+msgid "Show device images (as in NetBox)"
+msgstr "Gerätebilder anzeigen (wie in NetBox)"
+
+#: forms.py:62 sections.py:202
+msgid "Front"
+msgstr "Vorderseite"
+
+#: forms.py:62 sections.py:202
+msgid "Rear"
+msgstr "Rückseite"
+
+#: forms.py:66
+msgid "Rack faces"
+msgstr "Rack-Seiten"
+
+#: forms.py:68
+msgid "Device list per rack"
+msgstr "Geräteliste je Rack"
+
+#: forms.py:69
+msgid "Page break after each rack"
+msgstr "Seitenumbruch nach jedem Rack"
+
+#: forms.py:72
+msgid "Model"
+msgstr "Modell"
+
+#: forms.py:72
+msgid "Ports on links"
+msgstr "Ports an Verbindungen"
+
+#: forms.py:76 templates/netbox_customer_export/branding_list.html:34
+msgid "Labels"
+msgstr "Beschriftung"
+
+#: forms.py:79
+msgid "Whole network (per site)"
+msgstr "Gesamtes Netzwerk (je Standort)"
+
+#: forms.py:79
+msgid "Per rack"
+msgstr "Je Rack"
+
+#: forms.py:83 sections.py:325
+msgid "Scope"
+msgstr "Umfang"
+
+#: forms.py:86
+msgid "Show provider circuits and devices outside the scope"
+msgstr "Provider-Leitungen & Geräte außerhalb anzeigen"
+
+#: forms.py:88
+msgid "Show uncabled devices"
+msgstr "Unverkabelte Geräte anzeigen"
+
+#: forms.py:95
+msgid "IP versions"
+msgstr "IP-Versionen"
+
+#: forms.py:98
+msgid "List empty sections anyway"
+msgstr "Leere Abschnitte trotzdem aufführen"
+
+#: forms.py:99
+msgid "Include secrets (e.g. Wi-Fi PSK)"
+msgstr "Geheimnisse (z.B. WLAN-PSK) mit exportieren"
+
+#: forms.py:117
+#, python-format
+msgid "Network documentation %(name)s"
+msgstr "Netzwerkdokumentation %(name)s"
+
+#: forms.py:148
+msgid "Preselected in the export form."
+msgstr "Wird im Exportformular vorausgewählt."
+
+#: forms.py:149
+msgid "PNG or JPG, shown on the cover page."
+msgstr "PNG oder JPG, erscheint auf dem Deckblatt."
+
+#: forms.py:150
+msgid ".docx or .dotx: styles, header/footer and margins are applied."
+msgstr ".docx oder .dotx: Formatvorlagen, Kopf-/Fußzeile und Ränder werden übernommen."
+
+#: forms.py:151
+msgid ""
+"Name as shown in Word, e.g. Grid Table 4 – Accent 1. Empty = own colouring."
+msgstr "Name wie in Word angezeigt, z.B. Gitternetztabelle 4 – Akzent 1. Leer = eigene Einfärbung."
+
+#: forms.py:165 models.py:84 models.py:106
+msgid "Device type"
+msgstr "Gerätetyp"
+
+#: forms.py:166 models.py:87 models.py:106
+msgid "Device role"
+msgstr "Geräterolle"
+
+#: forms.py:168 models.py:111
+msgid "Automatic"
+msgstr "Automatisch"
+
+#: forms.py:168 models.py:89
+#: templates/netbox_customer_export/_symbol_table.html:3
+#: templates/netbox_customer_export/symbol_edit.html:33
+msgid "Symbol"
+msgstr "Symbol"
+
+#: forms.py:175
+msgid ""
+"PNG, JPG or GIF, ideally square with a transparent background. Replaces the "
+"selected symbol."
+msgstr "PNG, JPG oder GIF, am besten quadratisch mit transparentem Hintergrund. Ersetzt das gewählte Symbol."
+
+#: licenses_slm.py:61
+msgid "unlimited"
+msgstr "unbefristet"
+
+#: licenses_slm.py:61 licenses_slm.py:81 licenses_slm.py:87
+msgid "active"
+msgstr "aktiv"
+
+#: licenses_slm.py:67
+#, python-format
+msgid "until %(date)s"
+msgstr "bis %(date)s"
+
+#: licenses_slm.py:69
+#, python-format
+msgid "from %(date)s"
+msgstr "ab %(date)s"
+
+#: licenses_slm.py:75
+#, python-format
+msgid "daily"
+msgid_plural "every %(n)d days"
+msgstr[0] "täglich"
+msgstr[1] "alle %(n)d Tage"
+
+#: licenses_slm.py:76
+#, python-format
+msgid "monthly"
+msgid_plural "every %(n)d months"
+msgstr[0] "monatlich"
+msgstr[1] "alle %(n)d Monate"
+
+#: licenses_slm.py:77
+#, python-format
+msgid "yearly"
+msgid_plural "every %(n)d years"
+msgstr[0] "jährlich"
+msgstr[1] "alle %(n)d Jahre"
+
+#: licenses_slm.py:79
+#, python-format
+msgid "(renewal %(interval)s)"
+msgstr "(Verlängerung %(interval)s)"
+
+#: licenses_slm.py:84
+msgid "expired"
+msgstr "abgelaufen"
+
+#: licenses_slm.py:86
+#, python-format
+msgid "expires in %(days)d day"
+msgid_plural "expires in %(days)d days"
+msgstr[0] "läuft in %(days)d Tag ab"
+msgstr[1] "läuft in %(days)d Tagen ab"
+
+#: licenses_slm.py:99 sections.py:223 sections.py:409
+msgid "Device"
+msgstr "Gerät"
+
+#: licenses_slm.py:99
+msgid "VM"
+msgstr "VM"
+
+#: licenses_slm.py:99 sections.py:292
+msgid "Cluster"
+msgstr "Cluster"
+
+#: licenses_slm.py:110 sections.py:407
+msgid "License"
+msgstr "Lizenz"
+
+#: licenses_slm.py:110
+msgid "Product / version"
+msgstr "Produkt / Version"
+
+#: licenses_slm.py:110 sections.py:410
+msgid "Quantity"
+msgstr "Anzahl"
+
+#: licenses_slm.py:110
+msgid "Term"
+msgstr "Laufzeit"
+
+#: licenses_slm.py:110
+msgid "Support"
+msgstr "Support"
+
+#: licenses_slm.py:110
+msgid "Installed on"
+msgstr "Installiert auf"
+
+#: licenses_slm.py:112
+msgid "License key"
+msgstr "Lizenzschlüssel"
+
+#: licenses_slm.py:135
+msgid "No manufacturer"
+msgstr "Ohne Hersteller"
+
+#: models.py:6
+msgid "Expected a hex colour without #, e.g. 1F4E79"
+msgstr "Hex-Farbe ohne # erwartet, z.B. 1F4E79"
+
+#: models.py:17
+msgid "Default profile"
+msgstr "Standardprofil"
+
+#: models.py:18
+msgid "Company name"
+msgstr "Firmenname"
+
+#: models.py:20
+msgid "Footer"
+msgstr "Fußzeile"
+
+#: models.py:22 templates/netbox_customer_export/branding_list.html:20
+msgid "Logo"
+msgstr "Logo"
+
+#: models.py:23
+msgid "Primary colour"
+msgstr "Primärfarbe"
+
+#: models.py:24
+msgid "Accent colour"
+msgstr "Akzentfarbe"
+
+#: models.py:25
+msgid "Table header text"
+msgstr "Schrift Tabellenkopf"
+
+#: models.py:26
+msgid "Label background"
+msgstr "Hintergrund Beschriftungen"
+
+#: models.py:27 templates/netbox_customer_export/branding_list.html:35
+msgid "Row stripes"
+msgstr "Zebrastreifen"
+
+#: models.py:28 templates/netbox_customer_export/branding_list.html:20
+msgid "Font"
+msgstr "Schriftart"
+
+#: models.py:30
+msgid "Font size (pt)"
+msgstr "Schriftgröße (pt)"
+
+#: models.py:36 templates/netbox_customer_export/branding_list.html:20
+msgid "Word template"
+msgstr "Word-Vorlage"
+
+#: models.py:38
+msgid "Table style (Word)"
+msgstr "Tabellenformatvorlage (Word)"
+
+#: models.py:39
+msgid "Additional CSS (PDF/HTML)"
+msgstr "Zusätzliches CSS (PDF/HTML)"
+
+#: models.py:44
+msgid "branding profile"
+msgstr "Branding-Profil"
+
+#: models.py:45
+msgid "branding profiles"
+msgstr "Branding-Profile"
+
+#: models.py:90 templates/netbox_customer_export/_symbol_table.html:12
+msgid "Custom icon"
+msgstr "Eigenes Icon"
+
+#: models.py:95
+msgid "topology symbol"
+msgstr "Topologie-Symbol"
+
+#: models.py:96
+msgid "topology symbols"
+msgstr "Topologie-Symbole"
+
+#: models.py:117
+msgid "Select exactly one device type or one device role."
+msgstr "Bitte genau einen Gerätetyp oder eine Geräterolle wählen."
+
+#: models.py:119
+msgid "Select a symbol or upload a custom icon."
+msgstr "Bitte ein Symbol wählen oder ein eigenes Icon hochladen."
+
+#: navigation.py:7 templates/netbox_customer_export/select.html:4
+msgid "Customer Documentation"
+msgstr "Kundendokumentation"
+
+#: navigation.py:12 templates/netbox_customer_export/symbol_list.html:3
+msgid "Topology Symbols"
+msgstr "Topologie-Symbole"
+
+#: navigation.py:17 navigation.py:30
+#: templates/netbox_customer_export/branding_list.html:7
+msgid "Add"
+msgstr "Hinzufügen"
+
+#: navigation.py:25 templates/netbox_customer_export/branding_list.html:3
+msgid "Branding Profiles"
+msgstr "Branding-Profile"
+
+#: renderers/__init__.py:24
+#, python-format
+msgid ""
+"PDF export requires WeasyPrint (pip install weasyprint + Pango): %(error)s"
+msgstr "PDF-Export benötigt WeasyPrint (pip install weasyprint + Pango): %(error)s"
+
+#: renderers/docx.py:51
+#, python-format
+msgid ""
+"Word export requires python-docx (pip install python-docx cairosvg): "
+"%(error)s"
+msgstr "Word-Export benötigt python-docx (pip install python-docx cairosvg): %(error)s"
+
+#: renderers/docx.py:61
+#, python-format
+msgid "Word template %(path)r could not be loaded: %(error)s"
+msgstr "Word-Vorlage %(path)r konnte nicht geladen werden: %(error)s"
+
+#: renderers/docx.py:107 templates/netbox_customer_export/document.html:63
+msgid "As of"
+msgstr "Stand"
+
+#: renderers/docx.py:113 templates/netbox_customer_export/document.html:69
+msgid "Table of contents"
+msgstr "Inhaltsverzeichnis"
+
+#: renderers/docx.py:217
+msgid "(rack graphic not available)"
+msgstr "(Rack-Grafik nicht verfügbar)"
+
+#: sections.py:60
+#, python-format
+msgid "U %(u)s"
+msgstr "HE %(u)s"
+
+#: sections.py:72
+msgid "Platform / OS"
+msgstr "Plattform / OS"
+
+#: sections.py:74
+msgid "OOB IP"
+msgstr "OOB-IP"
+
+#: sections.py:76
+msgid "Asset tag"
+msgstr "Inventarnr."
+
+#: sections.py:91
+msgid "No entries."
+msgstr "Keine Einträge vorhanden."
+
+#: sections.py:98
+msgid "Overview & site data"
+msgstr "Übersicht & Standortdaten"
+
+#: sections.py:98 sections.py:141
+#: templates/netbox_customer_export/branding_edit.html:18
+msgid "General"
+msgstr "Allgemein"
+
+#: sections.py:98
+msgid "Key figures, addresses, location tree"
+msgstr "Kennzahlen, Adressen, Lokationsbaum"
+
+#: sections.py:102
+msgid "Sites"
+msgstr "Standorte"
+
+#: sections.py:103 sections.py:166 sections.py:173
+#: templates/netbox_customer_export/export.html:114
+msgid "Racks"
+msgstr "Racks"
+
+#: sections.py:105 sections.py:284 sections.py:287
+msgid "Virtual machines"
+msgstr "Virtuelle Maschinen"
+
+#: sections.py:106
+msgid "Prefixes"
+msgstr "Präfixe"
+
+#: sections.py:107 sections.py:332 sections.py:335
+msgid "VLANs"
+msgstr "VLANs"
+
+#: sections.py:108 sections.py:385 sections.py:388
+msgid "Circuits"
+msgstr "Leitungen"
+
+#: sections.py:115 sections.py:177 sections.py:251 topology.py:137
+#, python-format
+msgid "Site %(name)s"
+msgstr "Standort %(name)s"
+
+#: sections.py:120
+msgid "Region"
+msgstr "Region"
+
+#: sections.py:122
+msgid "Facility"
+msgstr "Einrichtung"
+
+#: sections.py:123
+msgid "Physical address"
+msgstr "Anschrift"
+
+#: sections.py:124
+msgid "Shipping address"
+msgstr "Lieferanschrift"
+
+#: sections.py:125
+msgid "Time zone"
+msgstr "Zeitzone"
+
+#: sections.py:134
+msgid "Parent"
+msgstr "Übergeordnet"
+
+#: sections.py:141 sections.py:159
+msgid "Contacts"
+msgstr "Ansprechpartner"
+
+#: sections.py:141
+msgid "Contacts of sites, locations, tenants"
+msgstr "Kontakte an Standorten, Lokationen, Mandanten"
+
+#: sections.py:162 sections.py:361
+msgid "Assigned to"
+msgstr "Zugewiesen an"
+
+#: sections.py:162 sections.py:186 sections.py:292 sections.py:325
+#: sections.py:340 sections.py:361
+msgid "Role"
+msgstr "Rolle"
+
+#: sections.py:162
+msgid "Priority"
+msgstr "Priorität"
+
+#: sections.py:162
+msgid "Phone"
+msgstr "Telefon"
+
+#: sections.py:162
+msgid "Email"
+msgstr "E-Mail"
+
+#: sections.py:166 sections.py:235 sections.py:258 sections.py:269
+#: sections.py:284
+msgid "Infrastructure"
+msgstr "Infrastruktur"
+
+#: sections.py:166
+msgid "By site & location, with rack elevation"
+msgstr "Nach Standort & Lokation, mit Rack-Ansicht"
+
+#: sections.py:179
+#, python-format
+msgid "Location %(name)s"
+msgstr "Lokation %(name)s"
+
+#: sections.py:179
+msgid "No location"
+msgstr "Ohne Lokation"
+
+#: sections.py:181 topology.py:106
+#, python-format
+msgid "Rack %(name)s"
+msgstr "Rack %(name)s"
+
+#: sections.py:188
+msgid "Height"
+msgstr "Höhe"
+
+#: sections.py:188
+#, python-format
+msgid "%(u)s U"
+msgstr "%(u)s HE"
+
+#: sections.py:189
+msgid "Facility ID"
+msgstr "Facility-ID"
+
+#: sections.py:214
+#, python-format
+msgid "Rack elevation (%(face)s) could not be created: %(error)s"
+msgstr "Rack-Ansicht (%(face)s) konnte nicht erzeugt werden: %(error)s"
+
+#: sections.py:223
+msgid "U"
+msgstr "HE"
+
+#: sections.py:223
+msgid "Face"
+msgstr "Seite"
+
+#: sections.py:235
+msgid "Tables per device role"
+msgstr "Tabellen je Geräterolle"
+
+#: sections.py:258 sections.py:262
+msgid "Disks & RAID"
+msgstr "Datenträger & RAID"
+
+#: sections.py:258
+msgid "From Netbox-Utilities (if installed)"
+msgstr "Aus Netbox-Utilities (falls installiert)"
+
+#: sections.py:264
+msgid "Netbox-Utilities with disk management is not installed – see README."
+msgstr "Netbox-Utilities mit Datenträger-Verwaltung ist nicht installiert – siehe README."
+
+#: sections.py:269 sections.py:272
+msgid "Power"
+msgstr "Stromversorgung"
+
+#: sections.py:269
+msgid "Power panels & feeds"
+msgstr "Power Panels & Feeds"
+
+#: sections.py:277
+msgid "Panel"
+msgstr "Panel"
+
+#: sections.py:277
+msgid "Feed"
+msgstr "Feed"
+
+#: sections.py:277
+msgid "Rack"
+msgstr "Rack"
+
+#: sections.py:277
+msgid "Phase"
+msgstr "Phase"
+
+#: sections.py:277
+msgid "Voltage"
+msgstr "Spannung"
+
+#: sections.py:277
+msgid "Amperage"
+msgstr "Ampere"
+
+#: sections.py:284
+msgid "Cluster, resources, IP"
+msgstr "Cluster, Ressourcen, IP"
+
+#: sections.py:292
+msgid "OS"
+msgstr "OS"
+
+#: sections.py:292
+msgid "RAM (MB)"
+msgstr "RAM (MB)"
+
+#: sections.py:292
+msgid "Disk (MB)"
+msgstr "Disk (MB)"
+
+#: sections.py:299 sections.py:302
+msgid "VRFs"
+msgstr "VRFs"
+
+#: sections.py:299 sections.py:314 sections.py:332 sections.py:347
+#: sections.py:365 sections.py:385 sections.py:448
+msgid "Network"
+msgstr "Netzwerk"
+
+#: sections.py:299
+msgid "Including route targets"
+msgstr "Inkl. Route Targets"
+
+#: sections.py:307
+msgid "Import RT"
+msgstr "Import-RT"
+
+#: sections.py:307
+msgid "Export RT"
+msgstr "Export-RT"
+
+#: sections.py:314 sections.py:318
+msgid "IP networks"
+msgstr "IP-Netze"
+
+#: sections.py:314
+msgid "Prefixes grouped by VRF"
+msgstr "Präfixe gruppiert nach VRF"
+
+#: sections.py:322 sections.py:355
+msgid "Global"
+msgstr "Global"
+
+#: sections.py:325
+msgid "Prefix"
+msgstr "Präfix"
+
+#: sections.py:332
+msgid "VID, name, group, role"
+msgstr "VID, Name, Gruppe, Rolle"
+
+#: sections.py:340 sections.py:371
+msgid "Group"
+msgstr "Gruppe"
+
+#: sections.py:347 sections.py:351
+msgid "IP addresses"
+msgstr "IP-Adressen"
+
+#: sections.py:347
+msgid "Detailed – can get long"
+msgstr "Ausführlich – kann lang werden"
+
+#: sections.py:361
+msgid "DNS name"
+msgstr "DNS-Name"
+
+#: sections.py:365 sections.py:368
+msgid "Wireless LANs"
+msgstr "WLANs"
+
+#: sections.py:365
+msgid "SSIDs, authentication"
+msgstr "SSIDs, Authentifizierung"
+
+#: sections.py:371
+msgid "Authentication"
+msgstr "Authentifizierung"
+
+#: sections.py:371
+msgid "Cipher"
+msgstr "Verschlüsselung"
+
+#: sections.py:385
+msgid "Provider, circuit ID, bandwidth"
+msgstr "Provider, Leitungs-ID, Bandbreite"
+
+#: sections.py:393
+msgid "Circuit ID"
+msgstr "Leitungs-ID"
+
+#: sections.py:393
+msgid "Provider"
+msgstr "Provider"
+
+#: sections.py:393
+msgid "Commit rate (Kbps)"
+msgstr "Bandbreite (Kbit/s)"
+
+#: sections.py:408
+msgid "Manufacturer"
+msgstr "Hersteller"
+
+#: sections.py:411
+msgid "Contract"
+msgstr "Vertrag"
+
+#: sections.py:418 sections.py:423
+msgid "Licenses"
+msgstr "Lizenzen"
+
+#: sections.py:418
+msgid "Contracts & licenses"
+msgstr "Verträge & Lizenzen"
+
+#: sections.py:418
+msgid "From NetBox-SLM or another license plugin"
+msgstr "Aus NetBox-SLM oder anderem Lizenz-Plugin"
+
+#: sections.py:444
+msgid ""
+"No license plugin installed (NetBox-SLM or netbox-lifecycle) – see README."
+msgstr "Kein Lizenz-Plugin installiert (NetBox-SLM oder netbox-lifecycle) – siehe README."
+
+#: sections.py:448 sections.py:452
+msgid "Network topology"
+msgstr "Netzwerk-Topologie"
+
+#: sections.py:448
+msgid "Diagram with symbols, like Packet Tracer"
+msgstr "Diagramm mit Symbolen, wie Packet Tracer"
+
+#: sections.py:461
+msgid "Topology per rack"
+msgstr "Topologie je Rack"
+
+#: sections.py:463
+msgid "No cabled devices found."
+msgstr "Keine verkabelten Geräte gefunden."
+
+#: symbol_views.py:79
+#, python-format
+msgid "Topology symbol for “%(name)s” saved."
+msgstr "Topologie-Symbol für „%(name)s“ gespeichert."
+
+#: symbol_views.py:96
+#, python-format
+msgid ""
+"Topology symbol for “%(name)s” deleted – automatic detection applies again."
+msgstr "Topologie-Symbol für „%(name)s“ gelöscht – es gilt wieder die automatische Erkennung."
+
+#: symbols.py:12
+msgid "Internet / provider"
+msgstr "Internet / Provider"
+
+#: symbols.py:13
+msgid "Modem / NTU / media converter"
+msgstr "Modem / NTU / Medienkonverter"
+
+#: symbols.py:14
+msgid "Firewall"
+msgstr "Firewall"
+
+#: symbols.py:15
+msgid "Router"
+msgstr "Router"
+
+#: symbols.py:16
+msgid "Layer 3 switch / core"
+msgstr "Layer-3-Switch / Core"
+
+#: symbols.py:17
+msgid "Switch"
+msgstr "Switch"
+
+#: symbols.py:18
+msgid "Radio link / microwave"
+msgstr "Funkstrecke / Richtfunk"
+
+#: symbols.py:19
+msgid "Wireless controller"
+msgstr "WLAN-Controller"
+
+#: symbols.py:20
+msgid "PoE injector"
+msgstr "PoE-Injektor"
+
+#: symbols.py:21
+msgid "Access point"
+msgstr "Access Point"
+
+#: symbols.py:22
+msgid "Server"
+msgstr "Server"
+
+#: symbols.py:23
+msgid "Storage / SAN (MSA)"
+msgstr "Storage / SAN (MSA)"
+
+#: symbols.py:24
+msgid "NAS"
+msgstr "NAS"
+
+#: symbols.py:25
+msgid "Tape drive / tape library"
+msgstr "Bandlaufwerk / Tape Library"
+
+#: symbols.py:26
+msgid "UPS / ATS"
+msgstr "USV / ATS"
+
+#: symbols.py:27
+msgid "Phone system (PBX)"
+msgstr "Telefonanlage"
+
+#: symbols.py:28
+msgid "IP phone"
+msgstr "IP-Telefon"
+
+#: symbols.py:29
+msgid "PC / client"
+msgstr "PC / Client"
+
+#: symbols.py:30
+msgid "Printer"
+msgstr "Drucker"
+
+#: symbols.py:31
+msgid "Camera"
+msgstr "Kamera"
+
+#: symbols.py:32
+msgid "Other device"
+msgstr "Sonstiges Gerät"
+
+#: symbols.py:36
+msgid "Hide in topology"
+msgstr "In Topologie ausblenden"
+
+#: template_content.py:19
+msgid "Customer Docs"
+msgstr "Kundendoku"
+
+#: template_content.py:42
+msgid "Topology Symbol"
+msgstr "Topologie-Symbol"
+
+#: templates/netbox_customer_export/_pills.html:5
+msgid "No entries in scope."
+msgstr "Keine Einträge im Scope."
+
+#: templates/netbox_customer_export/_symbol_table.html:3
+msgid "Assignment"
+msgstr "Zuordnung"
+
+#: templates/netbox_customer_export/_symbol_table.html:15
+#: templates/netbox_customer_export/branding_list.html:42
+msgid "Edit"
+msgstr "Bearbeiten"
+
+#: templates/netbox_customer_export/_symbol_table.html:18
+#: templates/netbox_customer_export/branding_delete.html:14
+#: templates/netbox_customer_export/branding_list.html:45
+#: templates/netbox_customer_export/symbol_delete.html:14
+msgid "Delete"
+msgstr "Löschen"
+
+#: templates/netbox_customer_export/branding_delete.html:3
+#, python-format
+msgid "Delete %(object)s"
+msgstr "%(object)s löschen"
+
+#: templates/netbox_customer_export/branding_delete.html:9
+#, python-format
+msgid ""
+"Do you really want to delete the branding profile <strong>%(object)s</"
+"strong>? The profile's logo and Word template will be removed as well."
+msgstr "Soll das Branding-Profil <strong>%(object)s</strong> wirklich gelöscht werden? Logo und Word-Vorlage des Profils werden ebenfalls entfernt."
+
+#: templates/netbox_customer_export/branding_delete.html:13
+#: templates/netbox_customer_export/branding_edit.html:77
+#: templates/netbox_customer_export/export.html:157
+#: templates/netbox_customer_export/symbol_delete.html:13
+#: templates/netbox_customer_export/symbol_edit.html:62
+msgid "Cancel"
+msgstr "Abbrechen"
+
+#: templates/netbox_customer_export/branding_edit.html:3
+#, python-format
+msgid "Edit %(object)s"
+msgstr "%(object)s bearbeiten"
+
+#: templates/netbox_customer_export/branding_edit.html:3
+msgid "New branding profile"
+msgstr "Neues Branding-Profil"
+
+#: templates/netbox_customer_export/branding_edit.html:27
+msgid "Current logo"
+msgstr "Aktuelles Logo"
+
+#: templates/netbox_customer_export/branding_edit.html:38
+msgid "Colours & font"
+msgstr "Farben & Schrift"
+
+#: templates/netbox_customer_export/branding_edit.html:78
+#: templates/netbox_customer_export/branding_list.html:40
+msgid "Preview"
+msgstr "Vorschau"
+
+#: templates/netbox_customer_export/branding_edit.html:79
+#: templates/netbox_customer_export/symbol_edit.html:63
+msgid "Save"
+msgstr "Speichern"
+
+#: templates/netbox_customer_export/branding_list.html:20
+msgid "Company"
+msgstr "Firma"
+
+#: templates/netbox_customer_export/branding_list.html:20
+msgid "Colours"
+msgstr "Farben"
+
+#: templates/netbox_customer_export/branding_list.html:27
+msgid "Default"
+msgstr "Standard"
+
+#: templates/netbox_customer_export/branding_list.html:32
+msgid "Primary"
+msgstr "Primär"
+
+#: templates/netbox_customer_export/branding_list.html:33
+msgid "Accent"
+msgstr "Akzent"
+
+#: templates/netbox_customer_export/branding_list.html:51
+msgid ""
+"No branding profiles yet. Until then, the settings from "
+"<code>configuration.py</code> apply."
+msgstr "Noch keine Branding-Profile angelegt. Bis dahin gelten die Einstellungen aus <code>configuration.py</code>."
+
+#: templates/netbox_customer_export/document.html:10
+msgid "Page"
+msgstr "Seite"
+
+#: templates/netbox_customer_export/export.html:4
+#, python-format
+msgid "Customer documentation: %(object)s"
+msgstr "Kundendokumentation: %(object)s"
+
+#: templates/netbox_customer_export/export.html:39
+msgid "Document"
+msgstr "Dokument"
+
+#: templates/netbox_customer_export/export.html:53
+msgid "Empty = your user name"
+msgstr "Leer = dein Benutzername"
+
+#: templates/netbox_customer_export/export.html:62
+msgid ""
+"Applies to management/OOB IPs, VMs, topology, IP networks and IP addresses."
+msgstr "Gilt für Management-/OOB-IPs, VMs, Topologie, IP-Netze und IP-Adressen."
+
+#: templates/netbox_customer_export/export.html:64
+msgid "Options"
+msgstr "Optionen"
+
+#: templates/netbox_customer_export/export.html:82
+#: templates/netbox_customer_export/export.html:103
+msgid "All"
+msgstr "Alle"
+
+#: templates/netbox_customer_export/export.html:82
+#: templates/netbox_customer_export/export.html:103
+msgid "None"
+msgstr "Keine"
+
+#: templates/netbox_customer_export/export.html:106
+msgid "Columns"
+msgstr "Spalten"
+
+#: templates/netbox_customer_export/export.html:116
+msgid "Embed rack elevations"
+msgstr "Rack-Ansichten einbetten"
+
+#: templates/netbox_customer_export/export.html:118
+msgid "Faces"
+msgstr "Seiten"
+
+#: templates/netbox_customer_export/export.html:120
+#: templates/netbox_customer_export/export.html:148
+msgid "More"
+msgstr "Weiteres"
+
+#: templates/netbox_customer_export/export.html:137
+msgid "Topology"
+msgstr "Topologie"
+
+#: templates/netbox_customer_export/export.html:139
+msgid "Manage symbols"
+msgstr "Symbole verwalten"
+
+#: templates/netbox_customer_export/export.html:145
+msgid ""
+"“Per rack” additionally shows each rack separately; connected devices "
+"outside appear dashed."
+msgstr "„Je Rack“ zeigt zusätzlich jedes Rack einzeln; verbundene Geräte außerhalb erscheinen gestrichelt."
+
+#: templates/netbox_customer_export/export.html:158
+msgid "Create document"
+msgstr "Dokument erstellen"
+
+#: templates/netbox_customer_export/select.html:9
+msgid "Select scope"
+msgstr "Scope wählen"
+
+#: templates/netbox_customer_export/select.html:11
+msgid "Fill in exactly one of the fields."
+msgstr "Genau eines der Felder ausfüllen."
+
+#: templates/netbox_customer_export/select.html:18
+msgid "Continue"
+msgstr "Weiter"
+
+#: templates/netbox_customer_export/symbol_delete.html:3
+msgid "Delete symbol assignment"
+msgstr "Symbol-Zuordnung löschen"
+
+#: templates/netbox_customer_export/symbol_delete.html:9
+#, python-format
+msgid ""
+"Delete the symbol assignment for <strong>%(label)s %(object)s</strong>? "
+"Automatic detection applies again afterwards. An uploaded icon will be "
+"removed as well."
+msgstr "Soll die Symbol-Zuordnung für <strong>%(label)s %(object)s</strong> gelöscht werden? Danach gilt wieder die automatische Erkennung. Ein hochgeladenes Icon wird ebenfalls entfernt."
+
+#: templates/netbox_customer_export/symbol_edit.html:4
+#, python-format
+msgid "Symbol for %(object)s"
+msgstr "Symbol für %(object)s"
+
+#: templates/netbox_customer_export/symbol_edit.html:4
+msgid "New symbol assignment"
+msgstr "Neue Symbol-Zuordnung"
+
+#: templates/netbox_customer_export/symbol_edit.html:23
+msgid "Applies to"
+msgstr "Gilt für"
+
+#: templates/netbox_customer_export/symbol_edit.html:25
+msgid ""
+"Select either a device type <em>or</em> a device role. The device type takes "
+"precedence."
+msgstr "Entweder einen Gerätetyp <em>oder</em> eine Geräterolle wählen. Gerätetyp hat Vorrang."
+
+#: templates/netbox_customer_export/symbol_edit.html:48
+msgid "Custom icon (optional)"
+msgstr "Eigenes Icon (optional)"
+
+#: templates/netbox_customer_export/symbol_edit.html:50
+msgid "Current icon"
+msgstr "Aktuelles Icon"
+
+#: templates/netbox_customer_export/symbol_edit.html:53
+msgid ""
+"If no symbol is selected, automatic detection determines the level in the "
+"diagram."
+msgstr "Ist kein Symbol gewählt, bestimmt die Automatik die Ebene im Diagramm."
+
+#: templates/netbox_customer_export/symbol_list.html:7
+msgid "Add assignment"
+msgstr "Zuordnung hinzufügen"
+
+#: templates/netbox_customer_export/symbol_list.html:23
+msgid "Assignments per device type"
+msgstr "Zuordnungen je Gerätetyp"
+
+#: templates/netbox_customer_export/symbol_list.html:24
+msgid "No device types assigned yet."
+msgstr "Noch keine Gerätetypen zugeordnet."
+
+#: templates/netbox_customer_export/symbol_list.html:27
+msgid "Assignments per device role"
+msgstr "Zuordnungen je Geräterolle"
+
+#: templates/netbox_customer_export/symbol_list.html:28
+msgid "No device roles assigned yet."
+msgstr "Noch keine Geräterollen zugeordnet."
+
+#: templates/netbox_customer_export/symbol_list.html:33
+msgid "How the symbol is determined"
+msgstr "So wird das Symbol bestimmt"
+
+#: templates/netbox_customer_export/symbol_list.html:36
+msgid "<strong>Device type</strong> assignment (custom icon or symbol)"
+msgstr "<strong>Gerätetyp</strong>-Zuordnung (eigenes Icon oder Symbol)"
+
+#: templates/netbox_customer_export/symbol_list.html:37
+msgid "<strong>Device role</strong> assignment"
+msgstr "<strong>Geräterolle</strong>-Zuordnung"
+
+#: templates/netbox_customer_export/symbol_list.html:38
+msgid ""
+"<strong>Automatic</strong> based on role, model and manufacturer, e.g. "
+"“Switch”, “Firewall”, “Sophos”, “Access Point”. Patch panels, power strips, "
+"PDUs and UPSs are hidden automatically."
+msgstr "<strong>Automatisch</strong> anhand von Rolle, Modell und Hersteller, z.B. „Switch“, „Firewall“, „Sophos“, „Access Point“. Patchpanels, Steckdosenleisten, PDUs und USVs werden automatisch ausgeblendet."
+
+#: templates/netbox_customer_export/symbol_list.html:44
+msgid "Built-in symbols"
+msgstr "Eingebaute Symbole"
+
+#: topology.py:140
+#, python-format
+msgid "Rack %(name)s (%(where)s)"
+msgstr "Rack %(name)s (%(where)s)"

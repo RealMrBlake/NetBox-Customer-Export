@@ -1,5 +1,6 @@
 """Ermittelt, welche Objekte zu einem Export-Scope (Standort, Lokation, Mandant, Mandantengruppe) gehören."""
 from django.db.models import Q
+from django.utils.translation import gettext_lazy as _
 
 from circuits.models import Circuit
 from dcim.models import Device, Location, PowerFeed, Rack, Site
@@ -16,10 +17,10 @@ SCOPE_MODELS = {
 }
 
 SCOPE_LABELS = {
-    "site": "Standort",
-    "location": "Lokation",
-    "tenant": "Mandant",
-    "tenantgroup": "Mandantengruppe",
+    "site": _("Site"),
+    "location": _("Location"),
+    "tenant": _("Tenant"),
+    "tenantgroup": _("Tenant group"),
 }
 
 NONE = Q(pk__in=[])

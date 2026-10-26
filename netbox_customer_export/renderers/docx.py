@@ -1,6 +1,8 @@
 import zipfile
 from io import BytesIO
 
+from django.utils.translation import gettext as _
+
 from . import MissingDependency
 
 DOTX_TYPE = b"application/vnd.openxmlformats-officedocument.wordprocessingml.template.main+xml"
@@ -46,7 +48,7 @@ def render_docx(doc):
         from docx.oxml.ns import qn
         from docx.shared import Cm, Pt, RGBColor
     except ImportError as e:
-        raise MissingDependency(f"Word-Export benötigt python-docx (pip install python-docx cairosvg): {e}")
+        raise MissingDependency(_("Word export requires python-docx (pip install python-docx cairosvg): %(error)s") % {"error": e})
 
     b = doc.branding
     primary = RGBColor.from_string(b["primary_color"])
@@ -56,7 +58,7 @@ def render_docx(doc):
         try:
             d = _load_template(template)
         except (OSError, KeyError, zipfile.BadZipFile) as e:
-            raise MissingDependency(f"Word-Vorlage {template!r} konnte nicht geladen werden: {e}")
+            raise MissingDependency(_("Word template %(path)r could not be loaded: %(error)s") % {"path": template, "error": e})
     else:
         # Ohne Vorlage: Standarddokument mit Farben/Schrift aus dem Branding
         d = Docx()
@@ -92,7 +94,7 @@ def render_docx(doc):
     meta = doc.meta
     if b.get("logo_path"):
         d.add_picture(b["logo_path"], width=Cm(5))
-    for _ in range(6):
+    for _blank in range(6):
         d.add_paragraph()
     title = d.add_paragraph()
     run = title.add_run(doc.title)
@@ -102,13 +104,13 @@ def render_docx(doc):
         d.add_paragraph().add_run(doc.subtitle).font.size = Pt(16)
     d.add_paragraph()
     info = d.add_paragraph()
-    for label, value in (("Stand", meta.get("date")), ("Erstellt von", meta.get("author")), ("", b.get("company_name"))):
+    for label, value in ((_("As of"), meta.get("date")), (_("Created by"), meta.get("author")), ("", b.get("company_name"))):
         if value:
             info.add_run(f"{label + ': ' if label else ''}{value}\n")
     d.add_page_break()
 
     # Inhaltsverzeichnis (wird beim Öffnen in Word aktualisiert)
-    d.add_heading("Inhaltsverzeichnis", level=1)
+    d.add_heading(_("Table of contents"), level=1)
     fld = OxmlElement("w:fldSimple")
     fld.set(qn("w:instr"), 'TOC \\o "1-2" \\h \\z \\u')
     d.add_paragraph()._p.append(fld)
@@ -212,7 +214,7 @@ def render_docx(doc):
                     # Topologie: volle Breite; Racks: 7 cm (Höhe skaliert mit der Rackgröße)
                     cell.add_run().add_picture(BytesIO(png), width=Cm(16.5 if blk.level == 1 else 7))
                 else:
-                    cell.add_run("(Rack-Grafik nicht verfügbar)")
+                    cell.add_run(_("(rack graphic not available)"))
                 cap = t.cell(1, i).paragraphs[0]
                 cap.alignment = WD_ALIGN_PARAGRAPH.CENTER
                 if img["caption"]:

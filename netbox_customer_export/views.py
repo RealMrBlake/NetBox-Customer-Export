@@ -3,6 +3,7 @@ from django.contrib.auth.mixins import LoginRequiredMixin
 from django.http import Http404, HttpResponse
 from django.shortcuts import get_object_or_404, redirect, render
 from django.utils import timezone
+from django.utils.formats import date_format
 from django.utils.text import slugify
 from django.views import View
 
@@ -64,7 +65,7 @@ class ExportView(LoginRequiredMixin, View):
             blocks=blocks,
             meta={
                 "author": opts.get("author") or request.user.get_full_name() or request.user.username,
-                "date": timezone.localtime().strftime("%d.%m.%Y"),
+                "date": date_format(timezone.localdate(), "SHORT_DATE_FORMAT"),
             },
             branding=get_branding(opts["branding"]),
         )
@@ -76,6 +77,6 @@ class ExportView(LoginRequiredMixin, View):
 
         response = HttpResponse(content, content_type=content_type)
         if ext != "html":
-            filename = f"{slugify(opts['title']) or 'dokumentation'}_{timezone.localdate():%Y%m%d}.{ext}"
+            filename = f"{slugify(opts['title']) or 'documentation'}_{timezone.localdate():%Y%m%d}.{ext}"
             response["Content-Disposition"] = f'attachment; filename="{filename}"'
         return response

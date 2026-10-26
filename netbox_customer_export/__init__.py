@@ -1,10 +1,11 @@
+from django.utils.translation import gettext_lazy as _
 from netbox.plugins import PluginConfig
 
 
 class CustomerExportConfig(PluginConfig):
     name = "netbox_customer_export"
-    verbose_name = "Kunden-Export"
-    description = "Kundendokumentation als PDF oder Word exportieren"
+    verbose_name = _("Customer Export")
+    description = _("Export customer documentation as PDF or Word")
     version = "0.11.0"
     author = "Claude"
     base_url = "customer-export"

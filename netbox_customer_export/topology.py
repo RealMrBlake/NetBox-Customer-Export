@@ -4,6 +4,8 @@ from collections import OrderedDict, defaultdict, deque
 from dataclasses import dataclass, field
 from io import BytesIO
 
+from django.utils.translation import gettext as _
+
 from .symbols import KINDS, SymbolResolver, builtin_icon
 
 MAX_PER_ROW = 12  # breitere Zeilen werden umgebrochen
@@ -101,7 +103,7 @@ def build_graphs(scope, opts, per="site"):
     def context(d):
         """Untertitel eines externen Geräts: wo es steht."""
         if per == "rack":
-            return [f"Rack {d.rack}" if d.rack else str(d.site)]
+            return [_("Rack %(name)s") % {"name": d.rack} if d.rack else str(d.site)]
         return [str(d.site)]
 
     graphs = []
@@ -132,10 +134,10 @@ def build_graphs(scope, opts, per="site"):
         if nodes:
             _layout(nodes, edges)
             if per == "site":
-                title = f"Standort {group}"
+                title = _("Site %(name)s") % {"name": group}
             else:
                 where = " / ".join(str(x) for x in (group.site, group.location) if x)
-                title = f"Rack {group.name} ({where})"
+                title = _("Rack %(name)s (%(where)s)") % {"name": group.name, "where": where}
             graphs.append(Graph(title, nodes, edges))
     return graphs
 

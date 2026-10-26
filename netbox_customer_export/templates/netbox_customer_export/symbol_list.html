@@ -1,9 +1,10 @@
 {% extends 'generic/_base.html' %}
-{% block title %}Topologie-Symbole{% endblock %}
+{% load i18n %}
+{% block title %}{% trans "Topology Symbols" %}{% endblock %}
 {% block controls %}
   {% if perms.netbox_customer_export.add_topologysymbol %}
     <div class="btn-list">
-      <a href="{% url 'plugins:netbox_customer_export:symbol_add' %}" class="btn btn-primary"><i class="mdi mdi-plus-thick"></i> Zuordnung hinzufügen</a>
+      <a href="{% url 'plugins:netbox_customer_export:symbol_add' %}" class="btn btn-primary"><i class="mdi mdi-plus-thick"></i> {% trans "Add assignment" %}</a>
     </div>
   {% endif %}
 {% endblock %}
@@ -19,28 +20,28 @@
 <div class="row g-3 mt-1">
   <div class="col-xl-7">
     <div class="card mb-3">
-      <h2 class="card-header"><i class="mdi mdi-shape-outline"></i> Zuordnungen je Gerätetyp</h2>
-      {% include 'netbox_customer_export/_symbol_table.html' with rows=types empty="Noch keine Gerätetypen zugeordnet." %}
+      <h2 class="card-header"><i class="mdi mdi-shape-outline"></i> {% trans "Assignments per device type" %}</h2>
+      {% include 'netbox_customer_export/_symbol_table.html' with rows=types empty=_("No device types assigned yet.") %}
     </div>
     <div class="card">
-      <h2 class="card-header"><i class="mdi mdi-tag-outline"></i> Zuordnungen je Geräterolle</h2>
-      {% include 'netbox_customer_export/_symbol_table.html' with rows=roles empty="Noch keine Geräterollen zugeordnet." %}
+      <h2 class="card-header"><i class="mdi mdi-tag-outline"></i> {% trans "Assignments per device role" %}</h2>
+      {% include 'netbox_customer_export/_symbol_table.html' with rows=roles empty=_("No device roles assigned yet.") %}
     </div>
   </div>
   <div class="col-xl-5">
     <div class="card mb-3">
-      <h2 class="card-header"><i class="mdi mdi-information-outline"></i> So wird das Symbol bestimmt</h2>
+      <h2 class="card-header"><i class="mdi mdi-information-outline"></i> {% trans "How the symbol is determined" %}</h2>
       <div class="card-body">
         <ol class="mb-0">
-          <li><strong>Gerätetyp</strong>-Zuordnung (eigenes Icon oder Symbol)</li>
-          <li><strong>Geräterolle</strong>-Zuordnung</li>
-          <li><strong>Automatisch</strong> anhand von Rolle, Modell und Hersteller, z.B. „Switch“, „Firewall“, „Sophos“, „Access Point“.
-            Patchpanels, Steckdosenleisten, PDUs und USVs werden automatisch ausgeblendet.</li>
+          <li>{% blocktrans trimmed %}<strong>Device type</strong> assignment (custom icon or symbol){% endblocktrans %}</li>
+          <li>{% blocktrans trimmed %}<strong>Device role</strong> assignment{% endblocktrans %}</li>
+          <li>{% blocktrans trimmed %}<strong>Automatic</strong> based on role, model and manufacturer, e.g. “Switch”, “Firewall”, “Sophos”, “Access Point”.
+            Patch panels, power strips, PDUs and UPSs are hidden automatically.{% endblocktrans %}</li>
         </ol>
       </div>
     </div>
     <div class="card">
-      <h2 class="card-header"><i class="mdi mdi-view-grid-outline"></i> Eingebaute Symbole</h2>
+      <h2 class="card-header"><i class="mdi mdi-view-grid-outline"></i> {% trans "Built-in symbols" %}</h2>
       <div class="card-body">
         <div class="ce-gallery">
           {% for key, label, url in builtin %}

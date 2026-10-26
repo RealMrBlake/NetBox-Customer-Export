@@ -1,5 +1,6 @@
 from django.urls import reverse
 from django.utils.html import format_html
+from django.utils.translation import gettext as _
 from netbox.plugins import PluginTemplateExtension
 
 
@@ -13,8 +14,9 @@ class CustomerExportButton(PluginTemplateExtension):
             kwargs={"kind": obj._meta.model_name, "pk": obj.pk},
         )
         return format_html(
-            '<a href="{}" class="btn btn-primary"><i class="mdi mdi-file-document-outline"></i> Kundendoku</a>',
+            '<a href="{}" class="btn btn-primary"><i class="mdi mdi-file-document-outline"></i> {}</a>',
             url,
+            _("Customer Docs"),
         )
 
 
@@ -37,7 +39,7 @@ class TopologySymbolButton(PluginTemplateExtension):
         else:
             url = f"{reverse('plugins:netbox_customer_export:symbol_add')}?{field}={obj.pk}"
         return format_html(
-            '<a href="{}" class="btn btn-outline-primary"><i class="mdi mdi-shape-outline"></i> Topologie-Symbol</a>', url
+            '<a href="{}" class="btn btn-outline-primary"><i class="mdi mdi-shape-outline"></i> {}</a>', url, _("Topology Symbol")
         )
 
 
