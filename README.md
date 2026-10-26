@@ -11,6 +11,16 @@ location, tenant or tenant group**.
 | **Python** | `>=3.10` |
 | **Repository** | <https://git.mrblake.cc/MrBlake/NetBox-Customer-Export> |
 
+## Screenshots
+
+Scope selection for a customer documentation export:
+
+![Scope selection for a customer documentation export](docs/screenshots/export.png)
+
+Branding profiles for exported documents:
+
+![Branding profiles for exported documents](docs/screenshots/branding.png)
+
 ## Features
 
 Before exporting, the technician selects which content the document contains:
