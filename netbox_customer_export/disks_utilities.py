@@ -53,7 +53,7 @@ def disk_blocks(scope, opts):
         by_device.setdefault(disk.device, []).append(disk)
 
     show_installed = bool(opts.get("disk_install_date"))
-    headers = ["Steckplatz", "Status", "Typ", "Hersteller / Modell", "Größe", "Seriennummer", "Firmware", "RAID"]
+    headers = ["Steckplatz", "Status", "Datenträger", "Größe", "Seriennummer", "RAID"]
     headers += ["Eingebaut"] * show_installed + ["Garantie bis", "Hinweise"]
     blocks = []
     for device, items in by_device.items():
@@ -89,12 +89,13 @@ def disk_blocks(scope, opts):
             row = [
                 _slot(d),
                 d.get_status_display(),
-                " / ".join(x for x in (d.get_disk_type_display(), d.get_interface_display()) if x),
-                " ".join(x for x in (d.manufacturer, d.model) if x),
+                "\n".join(x for x in (
+                    " ".join(x for x in (d.manufacturer, d.model) if x),
+                    " / ".join(x for x in (d.get_disk_type_display(), d.get_interface_display()) if x),
+                ) if x),
                 fmt(d.capacity_gb) if d.capacity_gb else None,
-                d.serial,
-                d.firmware,
-                d.raid_group,
+                "\n".join(x for x in (d.serial, f"FW {d.firmware}" if d.firmware else "") if x),
+                d.raid_group.name if d.raid_group_id else None,
             ]
             if show_installed:
                 row.append(_date(getattr(d, "install_date", None)))
