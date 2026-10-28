@@ -138,10 +138,12 @@
           </div>
         </div>
       </div>
-      {% if rack_photos %}
-        <div class="card ce-card mt-3" data-ce-depends="racks">
+      <div class="card ce-card mt-3" data-ce-depends="racks">
           <h2 class="card-header"><i class="mdi mdi-image-multiple-outline"></i> Rack-Fotos</h2>
           <div class="card-body">
+            {% if not rack_photos %}
+              <div class="text-secondary">Keine Bildanhänge an Racks in diesem Scope gefunden. Fotos lassen sich am Rack über <em>Bild anhängen</em> hochladen.</div>
+            {% else %}
             <div class="form-text mt-0 mb-3">Ausgewählte Fotos erscheinen im Anhang am Dokumentende, unter der jeweiligen Rack-Ansicht steht ein Verweis darauf.</div>
             {% for rack, atts in rack_photos %}
               <div class="ce-photo-rack" data-ce-group>
@@ -160,9 +162,9 @@
                 </div>
               </div>
             {% endfor %}
+            {% endif %}
           </div>
         </div>
-      {% endif %}
       <div class="card ce-card mt-3" data-ce-depends="topology">
         <h2 class="card-header d-flex justify-content-between align-items-center">
           <span><i class="mdi mdi-sitemap"></i> Topologie</span>
