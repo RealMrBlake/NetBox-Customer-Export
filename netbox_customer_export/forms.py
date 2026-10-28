@@ -76,7 +76,11 @@ class ExportForm(forms.Form):
         label="Beschriftung",
     )
     topo_scope = forms.MultipleChoiceField(
-        choices=(("site", "Gesamtes Netzwerk (je Standort)"), ("rack", "Je Rack")),
+        choices=(
+            ("site", "Gesamtes Netzwerk (je Standort)"),
+            ("location", "Je Lokation (Verkabelung inkl. Patchfelder)"),
+            ("rack", "Je Rack"),
+        ),
         initial=["site"],
         required=False,
         widget=forms.CheckboxSelectMultiple,

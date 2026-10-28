@@ -554,7 +554,7 @@ def licenses(scope, opts):
 
 @section("topology", "Netzwerk-Topologie", "Netzwerk", default=False, hint="Diagramm mit Symbolen, wie Packet Tracer")
 def topology(scope, opts):
-    from .topology import build_graphs, render_png
+    from .topology import build_graphs, build_location_graphs, render_png
 
     title = H(1, "Netzwerk-Topologie")
     scopes = opts.get("topo_scope") or ["site"]
@@ -562,6 +562,9 @@ def topology(scope, opts):
     pages = []  # (Überschriften, Graph) – je eine Querformat-Seite
     if "site" in scopes:
         pages += [([H(2, g.title)], g) for g in build_graphs(scope, opts, per="site")]
+    if "location" in scopes:
+        locs = build_location_graphs(scope, opts)
+        pages += [(([H(2, "Verkabelung je Lokation")] if i == 0 else []) + [H(3, g.title)], g) for i, g in enumerate(locs)]
     if "rack" in scopes:
         racks = build_graphs(scope, opts, per="rack")
         # Rack-Seiten unter einer gemeinsamen Zwischenüberschrift, Racks selbst eine Ebene tiefer (kürzeres Inhaltsverzeichnis)

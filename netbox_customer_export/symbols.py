@@ -14,6 +14,7 @@ KINDS = OrderedDict(
         ("l3switch", ("Layer-3-Switch / Core", 2)),
         ("switch", ("Switch", 3)),
         ("radio", ("Funkstrecke / Richtfunk", 3)),
+        ("patchpanel", ("Patchfeld / Rangierverteiler", 3)),
         ("wlc", ("WLAN-Controller", 3)),
         ("poe", ("PoE-Injektor", 4)),
         ("ap", ("Access Point", 4)),
@@ -286,6 +287,14 @@ def _draw_ups(d):
     d.polygon([(62, 70), (50, 88), (58, 88), (54, 102), (70, 82), (62, 82), (68, 70)], fill=(250, 200, 40))
 
 
+def _draw_patchpanel(d):
+    # flaches 19"-Feld mit zwei Portreihen, bewusst nüchtern (passives Element)
+    _iso_box(d, 8, 58, 104, 92, 14, (96, 104, 114), (150, 158, 168), (74, 82, 92))
+    for row in (64, 78):
+        for i in range(12):
+            d.rectangle([14 + i * 7.5, row, 19 + i * 7.5, row + 7], fill=(40, 46, 54))
+
+
 def _draw_pbx(d):
     # Anlage (Box) mit Hörer-Symbol
     _iso_box(d, 12, 50, 104, 104, 12, (62, 70, 80), (126, 136, 148), (44, 52, 60))
@@ -319,6 +328,7 @@ _DRAWERS = {
     "tape": _draw_tape,
     "ups": _draw_ups,
     "pbx": _draw_pbx,
+    "patchpanel": _draw_patchpanel,
 }
 
 
@@ -365,6 +375,11 @@ class SymbolResolver:
         except DatabaseError:  # Migration noch nicht ausgeführt
             pass
         self._icons = {}
+
+    def is_hidden(self, device):
+        """Per Symbolzuordnung ausdrücklich ausgeblendet?"""
+        sym = self.by_type.get(device.device_type_id) or self.by_role.get(device.role_id)
+        return bool(sym and sym.kind == HIDDEN)
 
     def resolve(self, device):
         """(kind, icon_png_bytes) oder (None, None), wenn das Gerät nicht gezeichnet wird."""

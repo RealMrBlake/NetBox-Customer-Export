@@ -175,7 +175,7 @@
         <div class="card-body">
           <div class="ce-label mt-0">Umfang</div>
           {% include 'netbox_customer_export/_pills.html' with field=form.topo_scope %}
-          <div class="form-text mb-2">„Je Rack“ zeigt zusätzlich jedes Rack einzeln; verbundene Geräte außerhalb erscheinen gestrichelt.</div>
+          <div class="form-text mb-2">„Je Lokation“ zeigt jedes Kabel einzeln, also auch Patchfelder und Trunks zu Unterverteilungen. „Je Rack“ zeigt jedes Rack einzeln. Verbundene Geräte außerhalb erscheinen gestrichelt.</div>
           <div class="ce-label">Beschriftung</div>
           {% include 'netbox_customer_export/_pills.html' with field=form.topo_details %}
           <div class="ce-label">Weiteres</div>
