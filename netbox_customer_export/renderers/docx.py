@@ -1,3 +1,4 @@
+import re
 import zipfile
 from io import BytesIO
 
@@ -16,6 +17,11 @@ def _svg_to_png(svg):
         return cairosvg.svg2png(bytestring=svg.encode("utf-8"), scale=2)
     except Exception:  # noqa: BLE001 – dann greift das Pillow-PNG
         return None
+
+
+def _bookmark_name(anchor):
+    """Word-Textmarken: max. 40 Zeichen, Buchstabe vorne, nur Buchstaben/Ziffern/_."""
+    return ("_ce_" + re.sub(r"\W", "_", anchor))[:40]
 
 
 def _load_template(path):
@@ -138,6 +144,38 @@ def render_docx(doc):
              s.header_distance, s.footer_distance) = portrait_margins
         return s
 
+    targets = {blk.anchor for blk in doc.blocks if blk.kind == "ref"}
+    bookmark_id = [0]
+
+    def add_bookmark(paragraph, anchor):
+        bookmark_id[0] += 1
+        start = OxmlElement("w:bookmarkStart")
+        start.set(qn("w:id"), str(bookmark_id[0]))
+        start.set(qn("w:name"), _bookmark_name(anchor))
+        end = OxmlElement("w:bookmarkEnd")
+        end.set(qn("w:id"), str(bookmark_id[0]))
+        paragraph._p.insert(1 if paragraph._p.pPr is not None else 0, start)
+        paragraph._p.append(end)
+
+    def add_link(paragraph, text, anchor):
+        link = OxmlElement("w:hyperlink")
+        link.set(qn("w:anchor"), _bookmark_name(anchor))
+        run = OxmlElement("w:r")
+        rpr = OxmlElement("w:rPr")
+        color = OxmlElement("w:color")
+        color.set(qn("w:val"), b["primary_color"])
+        underline = OxmlElement("w:u")
+        underline.set(qn("w:val"), "single")
+        rpr.append(color)
+        rpr.append(underline)
+        run.append(rpr)
+        t = OxmlElement("w:t")
+        t.text = text
+        t.set(qn("xml:space"), "preserve")
+        run.append(t)
+        link.append(run)
+        paragraph._p.append(link)
+
     for blk in doc.blocks:
         if landscape_open and blk.kind != "landscape":
             # erst beim nächsten Inhalt zurück ins Hochformat – vermeidet leere Seiten
@@ -167,9 +205,18 @@ def render_docx(doc):
             else:
                 para.add_run().add_picture(BytesIO(png), height=avail_h)
         elif blk.kind == "heading":
-            d.add_heading(blk.text, level=min(blk.level, 4))
+            heading = d.add_heading(blk.text, level=min(blk.level, 4))
+            if blk.anchor in targets:
+                add_bookmark(heading, blk.anchor)
         elif blk.kind == "paragraph":
             d.add_paragraph(blk.text)
+        elif blk.kind == "ref":
+            para = d.add_paragraph()
+            if blk.rows and blk.rows[0]:
+                para.add_run(blk.rows[0])
+            add_link(para, blk.text, blk.anchor)
+            for r in para.runs:
+                r.font.size = Pt(max(b["font_size"] - 1, 7))
         elif blk.kind == "pagebreak":
             d.add_page_break()
         elif blk.kind in ("table", "kv"):
@@ -209,8 +256,14 @@ def render_docx(doc):
                 cell = t.cell(0, i).paragraphs[0]
                 cell.alignment = WD_ALIGN_PARAGRAPH.CENTER
                 if png:
-                    # Topologie: volle Breite; Racks: 7 cm (Höhe skaliert mit der Rackgröße)
-                    cell.add_run().add_picture(BytesIO(png), width=Cm(16.5 if blk.level == 1 else 7))
+                    # Topologie: volle Breite; Fotos: halbe Breite; Racks: 7 cm (Höhe skaliert mit der Rackgröße)
+                    width = {1: 16.5, 2: 8}.get(blk.level, 7)
+                    if blk.level == 2:
+                        from PIL import Image
+
+                        px_w, px_h = Image.open(BytesIO(png)).size
+                        width = min(width, 9 * px_w / px_h)  # Hochformat-Fotos auf max. 9 cm Höhe begrenzen
+                    cell.add_run().add_picture(BytesIO(png), width=Cm(width))
                 else:
                     cell.add_run("(Rack-Grafik nicht verfügbar)")
                 cap = t.cell(1, i).paragraphs[0]

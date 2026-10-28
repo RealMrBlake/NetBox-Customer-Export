@@ -25,6 +25,13 @@
   .ce-card { transition: opacity .15s; }
   .ce-actions { position: sticky; bottom: 0; z-index: 10; background: var(--tblr-bg-surface); border-top: 1px solid var(--tblr-border-color); padding: .75rem 1rem; display: flex; justify-content: flex-end; gap: .5rem; }
   .ce-format .btn { flex: 1; padding-left: .25rem; padding-right: .25rem; }
+  .ce-photos { display: grid; grid-template-columns: repeat(auto-fill, minmax(130px, 1fr)); gap: .5rem; }
+  .ce-photo { position: relative; margin: 0; border: 1px solid var(--tblr-border-color); border-radius: .375rem; overflow: hidden; cursor: pointer; background: var(--tblr-bg-surface-secondary); }
+  .ce-photo:has(input:checked) { border-color: var(--tblr-primary); box-shadow: 0 0 0 1px var(--tblr-primary); }
+  .ce-photo img { display: block; width: 100%; aspect-ratio: 4 / 3; object-fit: cover; }
+  .ce-photo .form-check-input { position: absolute; top: .4rem; left: .4rem; margin: 0; }
+  .ce-photo span { display: block; padding: .25rem .4rem; font-size: .75rem; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .ce-photo-rack + .ce-photo-rack { margin-top: .9rem; }
 </style>
 
 <form method="post" class="mt-3" id="ce-export-form">
@@ -131,6 +138,31 @@
           </div>
         </div>
       </div>
+      {% if rack_photos %}
+        <div class="card ce-card mt-3" data-ce-depends="racks">
+          <h2 class="card-header"><i class="mdi mdi-image-multiple-outline"></i> Rack-Fotos</h2>
+          <div class="card-body">
+            <div class="form-text mt-0 mb-3">Ausgewählte Fotos erscheinen im Anhang am Dokumentende, unter der jeweiligen Rack-Ansicht steht ein Verweis darauf.</div>
+            {% for rack, atts in rack_photos %}
+              <div class="ce-photo-rack" data-ce-group>
+                <div class="ce-group-head">
+                  <h5>{{ rack.name }} <span class="fw-normal" style="text-transform: none">· {{ rack.site }}{% if rack.location %} / {{ rack.location }}{% endif %}</span></h5>
+                  <span><a data-ce-all>Alle</a> · <a data-ce-none>Keine</a></span>
+                </div>
+                <div class="ce-photos">
+                  {% for a in atts %}
+                    <label class="ce-photo" title="{{ a.name|default:a.image.name }}">
+                      <input type="checkbox" class="form-check-input" name="rack_photos" value="{{ a.pk }}"{% if a.pk|stringformat:"s" in form.rack_photos.value %} checked{% endif %}>
+                      <img src="{{ a.image.url }}" alt="" loading="lazy">
+                      <span>{{ a.name|default:a.image.name }}</span>
+                    </label>
+                  {% endfor %}
+                </div>
+              </div>
+            {% endfor %}
+          </div>
+        </div>
+      {% endif %}
       <div class="card ce-card mt-3" data-ce-depends="topology">
         <h2 class="card-header d-flex justify-content-between align-items-center">
           <span><i class="mdi mdi-sitemap"></i> Topologie</span>

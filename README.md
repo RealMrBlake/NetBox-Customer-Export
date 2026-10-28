@@ -28,7 +28,7 @@ Before exporting, the technician selects which content the document contains:
 | Group | Content |
 |---|---|
 | General | Overview & site data (address, location tree, key figures), contacts |
-| Infrastructure | Racks by site → location with rack elevation (front/rear, optionally with device images as in NetBox) and occupancy list, devices by **selectable device roles** (servers, switches, APs, routers …) with **selectable columns**, power, VMs, **disks & RAID** from [Netbox-Utilities](https://git.mrblake.cc/MrBlake/Netbox-Utilities) (if installed) |
+| Infrastructure | Racks by site → location with rack elevation (front/rear, optionally with device images as in NetBox) occupancy list and optional **rack photos** in an appendix, devices by **selectable device roles** (servers, switches, APs, routers …) with **selectable columns**, power, **virtualization clusters** with resources, VMs, **disks & RAID** from [Netbox-Utilities](https://git.mrblake.cc/MrBlake/Netbox-Utilities) (if installed) |
 | Network | VRFs (incl. RTs), prefixes by VRF, VLANs, IP addresses (detailed), WLANs/SSIDs, circuits, **network topology** |
 | Contracts & licenses | Licenses from [NetBox-SLM](https://git.mrblake.cc/MrBlake/NetBox-SLM) (detected automatically) or another license plugin (e.g. `netbox-lifecycle`) |
 
@@ -303,6 +303,23 @@ failed disks, the RAID groups (level, count, usable capacity, fault tolerance) a
 slot, status, type, model, size, serial number, firmware, RAID group, optionally the install date, warranty and warnings (failed, warranty
 expired/expiring soon, too old – thresholds from the Utilities configuration). Removed disks (history) are not shown.
 Without the plugin the section stays empty.
+
+### Rack photos
+
+Images attached to racks in NetBox (*Attach an image*) show up as thumbnails in the
+**Rack photos** card of the export form, grouped by rack. Selected photos are
+placed in an appendix at the end of the document. Below each rack elevation a link
+points to that rack's photos, and each appendix entry links back to the rack. Photos
+are rotated according to EXIF and scaled down to 1600 px. In Word the links are internal
+hyperlinks to bookmarks.
+
+### Virtualization clusters
+
+The **Virtualization clusters** section (off by default) lists every cluster with hosts
+or VMs in scope: an overview table, then per cluster type, group, status, tenant and the
+summed vCPU, RAM and disk of its VMs, plus a host table with VMs, vCPU and RAM per host.
+Only VMs inside the export scope are counted, so a tenant export does not reveal other
+tenants' VMs on a shared cluster.
 
 ### Rack elevations
 

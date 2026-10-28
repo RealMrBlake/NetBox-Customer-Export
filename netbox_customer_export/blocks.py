@@ -9,7 +9,7 @@ EMPTY = "—"
 
 @dataclass
 class Block:
-    kind: str  # heading | paragraph | table | kv | images | pagebreak
+    kind: str  # heading | paragraph | ref | table | kv | images | pagebreak | landscape
     level: int = 0
     text: str = ""
     headers: list = field(default_factory=list)
@@ -47,6 +47,11 @@ def P(text):
     return Block("paragraph", text=str(text))
 
 
+def REF(text, target, prefix=""):
+    """Interner Verweis auf eine Überschrift (target = deren anchor); prefix bleibt unverlinkt."""
+    return Block("ref", text=str(text), anchor=target, rows=[prefix])
+
+
 def T(headers, rows):
     return Block("table", headers=list(headers), rows=[[fmt(c) for c in r] for r in rows])
 
@@ -56,18 +61,20 @@ def KV(pairs, skip_empty=True):
     return Block("kv", rows=rows)
 
 
-def IMAGES(images, wide=False):
-    """images: Liste von (svg_string oder None, caption, png_bytes_oder_None)."""
+def IMAGES(images, wide=False, photos=False):
+    """images: Liste von (svg_string oder None, caption, png_bytes_oder_None). Statt PNG geht auch JPEG."""
     out = []
     for svg, caption, png in images:
         if svg:
             data_uri = "data:image/svg+xml;base64," + base64.b64encode(svg.encode("utf-8")).decode("ascii")
         elif png:
-            data_uri = "data:image/png;base64," + base64.b64encode(png).decode("ascii")
+            mime = "image/jpeg" if png[:2] == bytes((0xFF, 0xD8)) else "image/png"
+            data_uri = f"data:{mime};base64," + base64.b64encode(png).decode("ascii")
         else:
             continue
         out.append({"svg": svg, "png": png, "caption": caption, "data_uri": data_uri})
-    return Block("images", images=out, level=1 if wide else 0)  # level=1: volle Seitenbreite
+    # level=1: volle Seitenbreite, level=2: Fotos (zwei je Zeile)
+    return Block("images", images=out, level=2 if photos else 1 if wide else 0)
 
 
 def LANDSCAPE(headings, png):

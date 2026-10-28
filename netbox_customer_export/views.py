@@ -41,7 +41,9 @@ class ExportView(LoginRequiredMixin, View):
         grouped = {}
         for s in SECTIONS.values():
             grouped.setdefault(s.group, []).append(s)
-        return render(request, self.template_name, {"object": scope.obj, "scope": scope, "form": form, "section_groups": grouped})
+        return render(request, self.template_name, {
+            "object": scope.obj, "scope": scope, "form": form, "section_groups": grouped, "rack_photos": form.photo_groups,
+        })
 
     def get(self, request, kind, pk):
         scope = self._scope(request, kind, pk)
@@ -57,6 +59,7 @@ class ExportView(LoginRequiredMixin, View):
         blocks = []
         for key in opts["sections"]:
             blocks += SECTIONS[key].func(scope, opts)
+        blocks += opts.pop("_appendix", [])  # z.B. Rack-Fotos, immer am Dokumentende
 
         doc = Document(
             title=opts["title"],

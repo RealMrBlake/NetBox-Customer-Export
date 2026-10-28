@@ -40,6 +40,11 @@
   .images img { max-height: 190mm; max-width: 80mm; }
   .images.wide figure { width: 100%; min-width: 0; }
   .images.wide img { width: 100%; height: auto; max-height: 240mm; object-fit: contain; }
+  .images.photos { display: flex; gap: 6mm; justify-content: flex-start; page-break-inside: avoid; }
+  .images.photos figure { width: calc(50% - 3mm); margin: 0 0 6mm; }
+  .images.photos img { width: 100%; height: auto; max-width: none; max-height: 95mm; object-fit: contain; border: 1px solid #ddd; }
+  .ref { font-size: 8.5pt; color: #555; margin: 2pt 0 8pt; }
+  .ref a { color: var(--primary); text-decoration: none; border-bottom: 1px solid currentColor; }
   figcaption { font-style: italic; color: #555; }
   .footer { position: running(footer); font-size: 7pt; color: #777; }
   @media screen { .footer { display: none; } }
@@ -74,13 +79,14 @@
   {% if b.kind == 'heading' %}
     {% if b.level == 1 %}<h1 id="{{ b.anchor }}">{{ b.text }}</h1>{% elif b.level == 2 %}<h2 id="{{ b.anchor }}">{{ b.text }}</h2>{% elif b.level == 3 %}<h3 id="{{ b.anchor }}">{{ b.text }}</h3>{% else %}<h4 id="{{ b.anchor }}">{{ b.text }}</h4>{% endif %}
   {% elif b.kind == 'paragraph' %}<p>{{ b.text|linebreaksbr }}</p>
+  {% elif b.kind == 'ref' %}<p class="ref">{{ b.rows.0 }}<a href="#{{ b.anchor }}">{{ b.text }}</a></p>
   {% elif b.kind == 'table' %}
     <table><thead><tr>{% for h in b.headers %}<th>{{ h }}</th>{% endfor %}</tr></thead>
     <tbody>{% for row in b.rows %}<tr>{% for c in row %}<td>{{ c|linebreaksbr }}</td>{% endfor %}</tr>{% endfor %}</tbody></table>
   {% elif b.kind == 'kv' %}
     <table class="kv"><tbody>{% for row in b.rows %}<tr><td>{{ row.0 }}</td><td>{{ row.1|linebreaksbr }}</td></tr>{% endfor %}</tbody></table>
   {% elif b.kind == 'images' %}
-    <div class="images{% if b.level == 1 %} wide{% endif %}">{% for img in b.images %}<figure><img src="{{ img.data_uri }}" alt="{{ img.caption }}">{% if img.caption %}<figcaption>{{ img.caption }}</figcaption>{% endif %}</figure>{% endfor %}</div>
+    <div class="images{% if b.level == 1 %} wide{% elif b.level == 2 %} photos{% endif %}">{% for img in b.images %}<figure><img src="{{ img.data_uri }}" alt="{{ img.caption }}">{% if img.caption %}<figcaption>{{ img.caption }}</figcaption>{% endif %}</figure>{% endfor %}</div>
   {% elif b.kind == 'pagebreak' %}<div class="pagebreak"></div>
   {% elif b.kind == 'landscape' %}
     <section class="landscape">

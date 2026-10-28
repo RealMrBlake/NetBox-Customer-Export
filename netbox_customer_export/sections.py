@@ -7,7 +7,7 @@ from django.apps import apps
 from django.contrib.contenttypes.models import ContentType
 from netbox.plugins import get_plugin_config
 
-from .blocks import EMPTY, H, IMAGES, KV, LANDSCAPE, P, PAGEBREAK, T, get
+from .blocks import EMPTY, H, IMAGES, KV, LANDSCAPE, P, PAGEBREAK, REF, T, get
 from .rack_png import render_rack_png
 from .rack_svg import render_rack_svg
 
@@ -171,12 +171,14 @@ def racks(scope, opts):
     blocks = [H(1, "Racks")]
     if not qs.exists():
         return _empty(opts, blocks)
+    photos = _rack_photos(scope, opts)
     for site, site_racks in groupby(qs, key=lambda r: r.site):
         blocks.append(H(2, f"Standort {site}"))
         for location, loc_racks in groupby(site_racks, key=lambda r: r.location):
             blocks.append(H(3, f"Lokation {location}" if location else "Ohne Lokation"))
             for rack in loc_racks:
-                blocks.append(H(4, f"Rack {rack.name}"))
+                rack_heading = H(4, f"Rack {rack.name}")
+                blocks.append(rack_heading)
                 blocks.append(
                     KV(
                         [
@@ -225,9 +227,45 @@ def racks(scope, opts):
                                 ],
                             )
                         )
+                if rack.pk in photos:
+                    blocks += _photo_appendix(opts, rack, rack_heading, photos[rack.pk])
                 if opts.get("rack_pagebreak"):
                     blocks.append(PAGEBREAK())
     return blocks
+
+
+def _rack_photos(scope, opts):
+    """Ausgewählte Bildanhänge je Rack-ID."""
+    selected = set(opts.get("rack_photos") or [])
+    if not selected:
+        return {}
+    from . import rack_photos
+
+    out = {}
+    for rack, att in rack_photos.attachments(scope):
+        if str(att.pk) in selected:
+            out.setdefault(rack.pk, []).append(att)
+    return out
+
+
+def _photo_appendix(opts, rack, rack_heading, atts):
+    """Legt die Fotos im Anhang ab (opts["_appendix"]) und liefert den Verweis unter der Rack-Ansicht."""
+    from . import rack_photos
+
+    images = [(None, rack_photos.caption(a), data) for a in atts if (data := rack_photos.load_jpeg(a))]
+    if not images:
+        return []
+    appendix = opts.setdefault("_appendix", [])
+    if not appendix:
+        appendix.append(H(1, "Anhang: Rack-Fotos"))
+    where = " / ".join(str(x) for x in (rack.site, rack.location) if x)
+    heading = H(2, f"Rack {rack.name}" + (f" ({where})" if where else ""))
+    appendix.append(heading)
+    for i in range(0, len(images), 2):  # zwei Fotos je Zeile
+        appendix.append(IMAGES(images[i:i + 2], photos=True))
+    appendix.append(REF("Zurück zur Rack-Ansicht", rack_heading.anchor, prefix="↑ "))
+    n = len(images)
+    return [REF(f"Anhang Rack-Fotos – Rack {rack.name}", heading.anchor, prefix=f"{n} Foto{'s' if n != 1 else ''}, siehe ")]
 
 
 @section("devices", "Geräte", "Infrastruktur", hint="Tabellen je Geräterolle")
@@ -277,6 +315,77 @@ def power(scope, opts):
         )
     )
     return blocks
+
+
+def _mb(value):
+    """MB als lesbare Größe (VM-RAM/-Disk sind in NetBox in MB gespeichert)."""
+    if not value:
+        return EMPTY
+    for unit, size in (("TB", 1000 ** 2), ("GB", 1000)):
+        if value >= size:
+            return f"{value / size:.1f} {unit}".replace(".0 ", " ").replace(".", ",")
+    return f"{value} MB"
+
+
+def _vm_totals(vms):
+    return (
+        sum(vm.vcpus or 0 for vm in vms),
+        sum(vm.memory or 0 for vm in vms),
+        sum(vm.disk or 0 for vm in vms),
+    )
+
+
+@section("clusters", "Virtualisierungs-Cluster", "Infrastruktur", default=False, hint="Hosts und Ressourcen je Cluster")
+def clusters(scope, opts):
+    qs = scope.clusters().select_related("type", "group", "tenant").order_by("group__name", "name")
+    blocks = [H(1, "Virtualisierungs-Cluster")]
+    if not qs.exists():
+        return _empty(opts, blocks)
+    vms_by_cluster = {}
+    for vm in scope.virtual_machines().select_related("device"):
+        vms_by_cluster.setdefault(vm.cluster_id, []).append(vm)
+
+    summary, details = [], []
+    for cluster in qs:
+        vms = vms_by_cluster.get(cluster.pk, [])
+        hosts = list(scope.restrict(cluster.devices.all()).select_related("device_type__manufacturer").order_by("name"))
+        vcpu, ram, disk = _vm_totals(vms)
+        active = sum(1 for vm in vms if vm.status == "active")
+        summary.append([cluster.name, cluster.type, len(hosts), f"{active} / {len(vms)}", f"{vcpu:g}" if vcpu else EMPTY, _mb(ram), _mb(disk)])
+
+        details.append(H(2, f"Cluster {cluster.name}"))
+        details.append(KV([
+            ("Typ", cluster.type),
+            ("Gruppe", cluster.group),
+            ("Status", get(cluster, "status")),
+            ("Zuordnung", getattr(cluster, "scope", None)),
+            ("Mandant", cluster.tenant),
+            ("Hosts", len(hosts)),
+            ("VMs aktiv / gesamt", f"{active} / {len(vms)}"),
+            ("vCPU (Summe)", f"{vcpu:g}" if vcpu else None),
+            ("RAM (Summe)", _mb(ram) if ram else None),
+            ("Speicher (Summe)", _mb(disk) if disk else None),
+            ("Beschreibung", cluster.description),
+        ]))
+        if hosts:
+            rows = []
+            for host in hosts:
+                host_vms = [vm for vm in vms if vm.device_id == host.pk]
+                h_vcpu, h_ram, _h_disk = _vm_totals(host_vms)
+                rows.append([
+                    host.name,
+                    f"{host.device_type.manufacturer} {host.device_type.model}",
+                    get(host, "status"),
+                    len(host_vms) if host_vms else EMPTY,
+                    f"{h_vcpu:g}" if h_vcpu else EMPTY,
+                    _mb(h_ram),
+                ])
+            details.append(T(["Host", "Hersteller / Modell", "Status", "VMs", "vCPU", "RAM"], rows))
+            if any(vm.device_id is None for vm in vms):
+                details.append(P("VMs ohne festen Host sind nur in den Cluster-Summen enthalten."))
+
+    blocks.append(T(["Cluster", "Typ", "Hosts", "VMs aktiv / gesamt", "vCPU", "RAM", "Speicher"], summary))
+    return blocks + details
 
 
 @section("vms", "Virtuelle Maschinen", "Infrastruktur", default=False, hint="Cluster, Ressourcen, IP")

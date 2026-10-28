@@ -5,7 +5,7 @@ from circuits.models import Circuit
 from dcim.models import Device, Location, PowerFeed, Rack, Site
 from ipam.models import VLAN, VRF, IPAddress, Prefix
 from tenancy.models import Tenant, TenantGroup
-from virtualization.models import VirtualMachine
+from virtualization.models import Cluster, VirtualMachine
 from wireless.models import WirelessLAN
 
 SCOPE_MODELS = {
@@ -80,6 +80,12 @@ class Scope:
 
     def devices(self):
         return self._qs(Device, site=("site",), location=("location",))
+
+    def clusters(self):
+        """Cluster am Scope selbst oder mit Hosts/VMs im Scope."""
+        own = Cluster.objects.filter(self._q(site=("_site",), location=("_location",), tenant=("tenant",)))
+        q = Q(pk__in=own.values("pk")) | Q(pk__in=self.devices().values("cluster")) | Q(pk__in=self.virtual_machines().values("cluster"))
+        return self.restrict(Cluster.objects.filter(q).distinct())
 
     def virtual_machines(self):
         return self._qs(

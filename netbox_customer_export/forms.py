@@ -66,6 +66,7 @@ class ExportForm(forms.Form):
     )
     rack_devices = forms.BooleanField(required=False, initial=True, label="Geräteliste je Rack")
     rack_pagebreak = forms.BooleanField(required=False, initial=True, label="Seitenumbruch nach jedem Rack")
+    rack_photos = forms.MultipleChoiceField(choices=(), required=False, widget=forms.CheckboxSelectMultiple, label="Rack-Fotos")
 
     topo_details = forms.MultipleChoiceField(
         choices=(("model", "Modell"), ("primary_ip", "Management-IP"), ("ports", "Ports an Verbindungen")),
@@ -108,6 +109,12 @@ class ExportForm(forms.Form):
             elif isinstance(field.widget, forms.TextInput):
                 field.widget.attrs["class"] = "form-control"
         self.fields["branding"].choices = [(k, b["name"]) for k, b in get_brandings().items()]
+        self.photo_groups = []
+        if scope is not None:
+            from .rack_photos import grouped
+
+            self.photo_groups = grouped(scope)
+            self.fields["rack_photos"].choices = [(str(a.pk), a.name) for _r, atts in self.photo_groups for a in atts]
         if scope is not None:
             role_ids = scope.devices().values("role")
             roles = DeviceRole.objects.filter(pk__in=role_ids).order_by("name")
