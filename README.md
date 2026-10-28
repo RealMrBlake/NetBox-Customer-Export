@@ -255,8 +255,8 @@ style of Cisco Packet Tracer:
 - Links come from NetBox **cable paths**; paths through patch panels are traced to the end device.
 - The top-to-bottom layout follows the cabling: provider → firewall/router → core → access → end devices, with ordering optimised for as few crossings as possible.
 - Lines are routed **orthogonally** on bus bars, coloured per upstream device. Port names sit at the target device; multiple uplinks are drawn thicker and marked "2×".
-- **Scope**: *entire network* (one page per site), *per location* and/or *per rack* (one page per rack). In the rack view, directly connected devices outside the rack appear faded and dashed, with their rack.
-- **Per location** shows the **physical cabling hop by hop** instead of end-to-end paths: every cable is a line and patch panels appear as their own nodes, so you see switch → patch panel → trunk → patch panel of the sub-distribution → switch. One diagram per top-level location includes its child locations; each device shows its sub-location and rack.
+- **Scope**: *entire network* (one page per site), *location overview* and/or *per rack* (one page per rack). In the rack view, directly connected devices outside the rack appear faded and dashed, with their rack.
+- The **location overview** draws one diagram per site with the **locations as nodes** (server room, halls, sub-distributions …). Lines are the physical cables between locations, labelled with count and cable type (e.g. `2× SMF, 4× CAT6a`), so you can follow the cabling from the server room to the last sub-distribution. Locations containing firewalls, routers or core switches are placed at the top; each node shows its parent location and the number of racks and devices.
 - Each topology gets its **own landscape page** (PDF and Word) and is scaled as large as possible.
 - Provider circuits appear as a cloud, devices of other sites dashed (can be disabled).
 - Selectable labels: management IP, model, ports on links.
@@ -275,7 +275,7 @@ storage/SAN, NAS, tape library, UPS/ATS, PBX, IP phone, PC/client, printer,
 camera and "other".
 
 Patch panels, power strips, PDUs, cable management and rooms are hidden
-automatically (in the per-location view, devices with front/rear ports are drawn as patch panels); further device types or roles can be hidden via "Hide in
+automatically; further device types or roles can be hidden via "Hide in
 topology". Custom icons are stored under `MEDIA_ROOT/customer-export/symbols/`.
 Permissions: object type *Customer Export | Topology symbol*, analogous to
 branding profiles.

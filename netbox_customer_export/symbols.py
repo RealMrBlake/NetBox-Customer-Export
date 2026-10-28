@@ -8,6 +8,7 @@ from io import BytesIO
 KINDS = OrderedDict(
     [
         ("cloud", ("Internet / Provider", 0)),
+        ("location", ("Lokation / Verteiler", 3)),
         ("modem", ("Modem / NTU / Medienkonverter", 1)),
         ("firewall", ("Firewall", 1)),
         ("router", ("Router", 1)),
@@ -32,7 +33,7 @@ KINDS = OrderedDict(
     ]
 )
 HIDDEN = "hidden"
-KIND_CHOICES = [(k, v[0]) for k, v in KINDS.items() if k != "cloud"] + [(HIDDEN, "In Topologie ausblenden")]
+KIND_CHOICES = [(k, v[0]) for k, v in KINDS.items() if k not in ("cloud", "location")] + [(HIDDEN, "In Topologie ausblenden")]
 
 # Reihenfolge wichtig: erster Treffer gewinnt. None = passiv, nicht zeichnen.
 # Tippvarianten („Acces Point“, „Controler“, „Libary“) sind absichtlich mit abgedeckt.
@@ -295,6 +296,15 @@ def _draw_patchpanel(d):
             d.rectangle([14 + i * 7.5, row, 19 + i * 7.5, row + 7], fill=(40, 46, 54))
 
 
+def _draw_location(d):
+    # Verteilerschrank mit Glastür und Höheneinheiten – steht in der Übersicht für eine ganze Lokation
+    _iso_box(d, 26, 20, 92, 116, 12, (58, 74, 92), (118, 136, 156), (42, 56, 72))
+    d.rectangle([33, 27, 85, 109], fill=(170, 196, 220), outline=OUTLINE, width=2)
+    for i, y in enumerate(range(33, 101, 11)):
+        d.rectangle([38, y, 80, y + 7], fill=(40, 52, 66))
+        d.ellipse([74, y + 2, 77, y + 5], fill=(60, 200, 90) if i % 2 == 0 else (86, 149, 206))
+
+
 def _draw_pbx(d):
     # Anlage (Box) mit Hörer-Symbol
     _iso_box(d, 12, 50, 104, 104, 12, (62, 70, 80), (126, 136, 148), (44, 52, 60))
@@ -329,6 +339,7 @@ _DRAWERS = {
     "ups": _draw_ups,
     "pbx": _draw_pbx,
     "patchpanel": _draw_patchpanel,
+    "location": _draw_location,
 }
 
 

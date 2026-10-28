@@ -17,6 +17,7 @@ class Node:
     icon: bytes
     sub: list = field(default_factory=list)
     external: bool = False  # Gerät eines anderen Standorts / Provider
+    tier: int = None  # Ebene überschreiben (sonst aus dem Symbol)
     row: int = 0  # Zeile im Diagramm (nach Umbruch)
     x: float = 0  # Mitte, in Layout-Pixeln
     y: float = 0  # Oberkante des Symbols, wird beim Zeichnen gesetzt
@@ -27,6 +28,7 @@ class Edge:
     a: str
     b: str
     labels: list = field(default_factory=list)
+    summary: str = ""  # feste Beschriftung statt Port-Namen (z.B. Lokationsübersicht)
 
 
 @dataclass
@@ -207,125 +209,120 @@ def _collect(scope, opts):
 
 
 def build_location_graphs(scope, opts):
-    """Ein Graph je Lokation (inkl. Unterlokationen) mit der physischen Verkabelung Hop für Hop.
+    """Lokationsübersicht: ein Graph je Standort, Knoten = Lokationen, Linien = Kabel zwischen Lokationen.
 
-    Anders als die Standort-Topologie (vollständige Kabelpfade) zeigt diese Ansicht jedes einzelne Kabel –
-    Patchfelder erscheinen als eigene Knoten, so sieht man Switch → Patchfeld → Trunk → Unterverteilung.
+    Gezählt werden physische Kabel (Interfaces, Front- und Rear-Ports), deren Enden in verschiedenen Lokationen
+    liegen – typischerweise LWL-/Kupfer-Trunks vom Serverraum zu den Unterverteilungen. Lokationen mit
+    Firewall/Router/Core stehen oben, die Ebenen darunter folgen der Verkabelung.
     """
     from dcim.models import FrontPort, Interface, RearPort
 
     resolver = SymbolResolver()
     devices = list(
-        scope.devices().filter(location__isnull=False).select_related(
-            "role", "device_type__manufacturer", "site", "location", "rack", "primary_ip4", "primary_ip6"
-        ).order_by("location__name", "rack__name", "name")
+        scope.devices().filter(location__isnull=False)
+        .select_related("role", "device_type__manufacturer", "site", "location__parent", "rack")
+        .order_by("site__name", "location__name")
     )
     if not devices:
         return []
-    ids = [d.pk for d in devices]
-    passive = set(FrontPort.objects.filter(device_id__in=ids).values_list("device_id", flat=True))
-    passive |= set(RearPort.objects.filter(device_id__in=ids).values_list("device_id", flat=True))
-
-    def root_of(d):
-        if scope.kind == "location":
-            return scope.obj
-        return d.location.get_root() if d.location.parent_id else d.location
-
-    def where(d, root):
-        parts = [str(d.location)] if d.location_id != root.pk else []
-        if d.rack_id:
-            parts.append(f"Rack {d.rack.name}")
-        return " · ".join(parts)
-
-    drawn, group_of = {}, {}  # pk -> (kind, icon); pk -> Wurzel-Lokation
     by_pk = {d.pk: d for d in devices}
-    groups = OrderedDict()
-    for d in devices:
-        kind, icon = resolver.resolve(d)
-        if not kind and d.pk in passive and not resolver.is_hidden(d):
-            kind, icon = "patchpanel", builtin_icon("patchpanel")
-        if not kind:
-            continue
-        drawn[d.pk] = (kind, icon)
-        root = root_of(d)
-        group_of[d.pk] = root
-        groups.setdefault(root, []).append(d.pk)
+    loc_of = {d.pk: d.location for d in devices}
 
-    # Kabel: jedes Kabel wird von beiden Enden gefunden, daher je Knotenpaar sammeln und doppelte Labels verwerfen
-    links = defaultdict(list)
-    outside = {}  # node_id -> Node-Vorlage (Gerät/Leitung außerhalb der Lokation)
+    # Ebene je Lokation = „höchstes“ Gerät darin (Firewall/Core oben, reine Verteiler darunter)
+    tier, racks, count = {}, defaultdict(set), defaultdict(int)
+    for d in devices:
+        kind, _icon = resolver.resolve(d)
+        t = KINDS.get(kind, ("", 3))[1] if kind else 3
+        tier[d.location_id] = min(tier.get(d.location_id, 9), t)
+        count[d.location_id] += 1
+        if d.rack_id:
+            racks[d.location_id].add(d.rack_id)
+
+    cables = {}  # cable.pk -> (Knoten a, Knoten b, Kabel)
+    outside = {}  # node_id -> Node (andere Standorte / Provider)
     for model in (Interface, FrontPort, RearPort):
-        ports = scope.restrict(model.objects.filter(device_id__in=list(drawn), cable__isnull=False)).select_related("device")
+        ports = scope.restrict(model.objects.filter(device_id__in=list(by_pk), cable__isnull=False)).select_related("cable")
         for port in ports:
+            if port.cable_id in cables:
+                continue
             try:
                 peers = port.link_peers or []
             except Exception:  # noqa: BLE001
                 continue
+            a = f"l{loc_of[port.device_id].pk}"
             for peer in peers:
-                a = f"d{port.device_id}"
                 peer_dev = getattr(peer, "device", None)
                 if peer_dev is not None:
-                    if peer_dev.pk == port.device_id:
+                    if peer_dev.pk in by_pk:
+                        b = f"l{loc_of[peer_dev.pk].pk}"
+                    elif not opts.get("topo_external"):
                         continue
-                    b = f"d{peer_dev.pk}"
-                    if peer_dev.pk not in drawn:
-                        if not opts.get("topo_external"):
-                            continue
-                        kind, icon = resolver.resolve(peer_dev)
-                        if not kind:
-                            kind, icon = "patchpanel", builtin_icon("patchpanel")
+                    else:
                         loc = getattr(peer_dev, "location", None)
-                        outside[b] = Node(b, peer_dev.name or str(peer_dev), kind, icon, [str(loc or peer_dev.site)], external=True)
-                    label = f"{port.name} – {peer.name}"
-                elif peer._meta.model_name == "circuittermination":
-                    if not opts.get("topo_external"):
-                        continue
+                        b = f"l{loc.pk}" if loc else f"s{peer_dev.site_id}"
+                        outside[b] = Node(
+                            b, str(loc or peer_dev.site), "location", builtin_icon("location"),
+                            [str(peer_dev.site)], external=True,
+                        )
+                elif peer._meta.model_name == "circuittermination" and opts.get("topo_external"):
                     circuit = peer.circuit
                     b = f"c{circuit.pk}"
                     outside[b] = Node(b, str(circuit.provider), "cloud", builtin_icon("cloud"), [str(circuit.cid)], external=True)
-                    label = port.name
                 else:
                     continue
-                key = tuple(sorted((a, b)))
-                if key[0] != a:
-                    label = " – ".join(reversed(label.split(" – ")))
-                if label not in links[key]:
-                    links[key].append(label)
+                if a != b:
+                    cables[port.cable_id] = (a, b, port.cable)
+                break
+
+    links = defaultdict(list)
+    for a, b, cable in cables.values():
+        links[tuple(sorted((a, b)))].append(cable)
+
+    sites = OrderedDict()
+    all_locs = {}
+    for d in devices:
+        sites.setdefault(d.site, OrderedDict())[d.location_id] = d.location
+        all_locs[f"l{d.location_id}"] = d.location
 
     graphs = []
-    for root, pks in groups.items():
+    for site, locations in sites.items():
         nodes = OrderedDict()
-        for pk in pks:
-            d = by_pk[pk]
-            kind, icon = drawn[pk]
-            sub = [w] if (w := where(d, root)) else []
-            nodes[f"d{pk}"] = Node(f"d{pk}", d.name or str(d), kind, icon, sub + _device_sub(d, opts))
+        for loc in locations.values():
+            sub = [str(loc.parent)] if loc.parent_id else []
+            n_racks, n_dev = len(racks[loc.pk]), count[loc.pk]
+            parts = [f"{n_racks} Rack" + ("s" if n_racks != 1 else "")] if n_racks else []
+            parts.append(f"{n_dev} Gerät" + ("e" if n_dev != 1 else ""))
+            sub.append(" · ".join(parts))
+            nodes[f"l{loc.pk}"] = Node(f"l{loc.pk}", loc.name, "location", builtin_icon("location"), sub, tier=tier[loc.pk])
         members = set(nodes)
         edges = []
-        for (a, b), labels in links.items():
-            in_a, in_b = a in members, b in members
-            if not (in_a or in_b):
+        for (a, b), lst in links.items():
+            if not (a in members or b in members):
                 continue
-            for nid, inside in ((a, in_a), (b, in_b)):
-                if inside:
+            for nid in (a, b):
+                if nid in members:
                     continue
                 tpl = outside.get(nid)
-                if tpl is None:  # Gerät im Scope, aber in einer anderen Lokation
-                    if not opts.get("topo_external"):
-                        break
-                    d = by_pk[int(nid[1:])]
-                    kind, icon = drawn[d.pk]
-                    tpl = Node(nid, d.name or str(d), kind, icon, [str(d.location)], external=True)
+                if tpl is None:  # Lokation im Scope, aber an einem anderen Standort
+                    loc = all_locs[nid]
+                    tpl = Node(nid, loc.name, "location", builtin_icon("location"), [str(loc.site)], external=True)
                 nodes[nid] = Node(**{**tpl.__dict__})
-            else:
-                edges.append(Edge(a, b, labels))
+            edges.append(Edge(a, b, [str(c) for c in lst], summary=_cable_summary(lst)))
         if not opts.get("topo_isolated"):
             linked = {n for e in edges for n in (e.a, e.b)}
             nodes = OrderedDict((k, v) for k, v in nodes.items() if k in linked)
         if nodes:
             _layout(nodes, edges)
-            graphs.append(Graph(f"Lokation {root} ({root.site})", nodes, edges))
+            graphs.append(Graph(f"Standort {site}", nodes, edges))
     return graphs
+
+
+def _cable_summary(cables):
+    """„2× SMF, 4× CAT6a“ – Kabel ohne Typ zählen als „Kabel“."""
+    types = defaultdict(int)
+    for c in cables:
+        types[c.get_type_display() if c.type else "Kabel"] += 1
+    return ", ".join(f"{n}× {t}" for t, n in sorted(types.items(), key=lambda x: -x[1]))
 
 
 # --- Layout -------------------------------------------------------------------
@@ -354,7 +351,7 @@ def _layout(nodes, edges):
     for e in edges:
         adj[e.a].add(e.b)
         adj[e.b].add(e.a)
-    tier = {nid: KINDS.get(n.kind, ("", 4))[1] for nid, n in nodes.items()}
+    tier = {nid: n.tier if n.tier is not None else KINDS.get(n.kind, ("", 4))[1] for nid, n in nodes.items()}
 
     layer = {n: None for n in nodes if not adj[n]}  # isolierte Knoten: unterste Zeile
     remaining = set(nodes) - set(layer)
@@ -423,6 +420,8 @@ def _oriented(graph, e):
 
 
 def _edge_text(graph, e, show_ports):
+    if e.summary:
+        return e.summary
     if show_ports:
         labels = _oriented(graph, e)
         return labels[0] + (f" (+{len(labels) - 1})" if len(labels) > 1 else "")

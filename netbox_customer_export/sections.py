@@ -562,9 +562,9 @@ def topology(scope, opts):
     pages = []  # (Überschriften, Graph) – je eine Querformat-Seite
     if "site" in scopes:
         pages += [([H(2, g.title)], g) for g in build_graphs(scope, opts, per="site")]
-    if "location" in scopes:
+    if "locations" in scopes:
         locs = build_location_graphs(scope, opts)
-        pages += [(([H(2, "Verkabelung je Lokation")] if i == 0 else []) + [H(3, g.title)], g) for i, g in enumerate(locs)]
+        pages += [(([H(2, "Lokationsübersicht")] if i == 0 else []) + [H(3, g.title)], g) for i, g in enumerate(locs)]
     if "rack" in scopes:
         racks = build_graphs(scope, opts, per="rack")
         # Rack-Seiten unter einer gemeinsamen Zwischenüberschrift, Racks selbst eine Ebene tiefer (kürzeres Inhaltsverzeichnis)

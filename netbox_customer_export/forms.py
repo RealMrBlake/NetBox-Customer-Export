@@ -78,7 +78,7 @@ class ExportForm(forms.Form):
     topo_scope = forms.MultipleChoiceField(
         choices=(
             ("site", "Gesamtes Netzwerk (je Standort)"),
-            ("location", "Je Lokation (Verkabelung inkl. Patchfelder)"),
+            ("locations", "Lokationsübersicht (Verbindungen zwischen Lokationen)"),
             ("rack", "Je Rack"),
         ),
         initial=["site"],
