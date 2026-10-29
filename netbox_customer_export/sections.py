@@ -310,7 +310,7 @@ def disks(scope, opts):
 
     blocks = [H(1, "Datenträger & RAID")]
     if not disks_utilities.is_installed():
-        return _empty(opts, blocks, "Netbox-Utilities mit Datenträger-Verwaltung ist nicht installiert – siehe README.")
+        return _empty(opts, blocks, "Keine Datenträger erfasst.")
     blocks += disks_utilities.disk_blocks(scope, opts)
     return blocks if len(blocks) > 1 else _empty(opts, blocks)
 
@@ -421,8 +421,6 @@ def clusters(scope, opts):
                 details.append(P("VMs ohne festen Host sind nur in den Cluster-Summen enthalten."))
 
     blocks.append(T(["Cluster", "Typ", "Hosts", "VMs aktiv / gesamt", "vCPU / Kerne", "RAM VMs / Hosts", "Speicher"], summary))
-    if hardware_utilities.is_installed():
-        blocks.append(P("Kerne und Host-RAM aus Netbox-Utilities (CPU & RAM). Verhältnis = zugewiesene vCPU je physischem Kern, Prozent = zugewiesener VM-RAM am physischen RAM."))
     return blocks + details
 
 
