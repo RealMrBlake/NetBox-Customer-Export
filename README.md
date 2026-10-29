@@ -322,6 +322,15 @@ summed vCPU, RAM and disk of its VMs, plus a host table with VMs, vCPU and RAM p
 Only VMs inside the export scope are counted, so a tenant export does not reveal other
 tenants' VMs on a shared cluster.
 
+### CPU & RAM (Netbox-Utilities)
+
+If [Netbox-Utilities](https://git.mrblake.cc/MrBlake/Netbox-Utilities) with CPU & RAM is installed:
+
+- Device tables offer the columns **CPU** (model, count, cores/threads) and **RAM** (total, modules, type and speed).
+- The **Virtualization clusters** section adds the physical cores/threads and RAM of the hosts and shows the overcommitment: vCPU per physical core (e.g. `2,6 : 1`) and assigned VM RAM as a percentage of host RAM, per cluster and per host.
+
+RAM is shown in binary units like in Netbox-Utilities (1 GB = 1024 MB), so VM and host values are comparable. Without the plugin the columns stay empty and the cluster section shows VM totals only.
+
 ### Rack elevations
 
 By default the plugin uses NetBox's own `dcim.svg.RackElevationSVG` in-process

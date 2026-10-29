@@ -8,6 +8,7 @@ from django.contrib.contenttypes.models import ContentType
 from netbox.plugins import get_plugin_config
 
 from .blocks import EMPTY, H, IMAGES, KV, LANDSCAPE, P, PAGEBREAK, REF, T, get
+from . import hardware_utilities
 from .rack_png import render_rack_png
 from .rack_svg import render_rack_svg
 
@@ -52,10 +53,20 @@ def primary_ips(obj, opts, sep=", "):
     return ip_text([obj.primary_ip4, obj.primary_ip6], opts, sep)
 
 
+def num(value):
+    """Decimal/float ohne überflüssige Nachkommastellen, deutsches Komma: 245, 2,5."""
+    if value is None:
+        return None
+    text = f"{value:f}"
+    if "." in text:
+        text = text.rstrip("0").rstrip(".")
+    return text.replace(".", ",")
+
+
 def _rack_pos(d, o=None):
     if not d.rack:
         return None
-    pos = f" / HE {d.position:g}" if d.position else ""
+    pos = f" / HE {num(d.position)}" if d.position else ""
     return f"{d.rack}{pos}"
 
 
@@ -71,6 +82,8 @@ DEVICE_COLUMNS = OrderedDict(
         ("primary_ip", ("Management-IP", lambda d, o: primary_ips(d, o))),
         ("oob_ip", ("OOB-IP", lambda d, o: ip_text([d.oob_ip], o))),
         ("serial", ("Seriennummer", lambda d, o: d.serial)),
+        ("cpu", ("CPU", lambda d, o: hardware_utilities.cpu_text(d))),
+        ("ram", ("RAM", lambda d, o: hardware_utilities.ram_text(d))),
         ("asset_tag", ("Inventarnr.", lambda d, o: d.asset_tag)),
         ("tenant", ("Mandant", lambda d, o: d.tenant)),
         ("description", ("Beschreibung", lambda d, o: d.description)),
@@ -222,7 +235,7 @@ def racks(scope, opts):
                             T(
                                 ["HE", "Gerät", "Hersteller / Modell", "Seite"],
                                 [
-                                    [f"{d.position:g}" if d.position else EMPTY, d.name, f"{d.device_type.manufacturer} {d.device_type.model}", d.get_face_display() if d.face else EMPTY]
+                                    [num(d.position) if d.position else EMPTY, d.name, f"{d.device_type.manufacturer} {d.device_type.model}", d.get_face_display() if d.face else EMPTY]
                                     for d in devs
                                 ],
                             )
@@ -321,10 +334,21 @@ def _mb(value):
     """MB als lesbare Größe (VM-RAM/-Disk sind in NetBox in MB gespeichert)."""
     if not value:
         return EMPTY
-    for unit, size in (("TB", 1000 ** 2), ("GB", 1000)):
+    for unit, size in (("TB", 1024 ** 2), ("GB", 1024)):
         if value >= size:
             return f"{value / size:.1f} {unit}".replace(".0 ", " ").replace(".", ",")
     return f"{value} MB"
+
+
+def _host_resources(hosts):
+    """Summe der physischen Kerne, Threads und RAM (GB) aller Hosts mit gepflegter Hardware."""
+    cores = threads = ram = 0
+    for host in hosts:
+        hw = hardware_utilities.hardware(host)
+        c, t = hardware_utilities.cores_threads(hw)
+        cores, threads = cores + (c or 0), threads + (t or 0)
+        ram += (hw.memory_gb or 0) if hw else 0
+    return cores, threads, ram
 
 
 def _vm_totals(vms):
@@ -351,7 +375,14 @@ def clusters(scope, opts):
         hosts = list(scope.restrict(cluster.devices.all()).select_related("device_type__manufacturer").order_by("name"))
         vcpu, ram, disk = _vm_totals(vms)
         active = sum(1 for vm in vms if vm.status == "active")
-        summary.append([cluster.name, cluster.type, len(hosts), f"{active} / {len(vms)}", f"{vcpu:g}" if vcpu else EMPTY, _mb(ram), _mb(disk)])
+        p_cores, p_threads, p_ram = _host_resources(hosts)
+        ram_pct = f" ({round(ram / (p_ram * 1024) * 100)} %)" if ram and p_ram else ""
+        summary.append([
+            cluster.name, cluster.type, len(hosts), f"{active} / {len(vms)}",
+            f"{num(vcpu)} / {p_cores}" if vcpu and p_cores else num(vcpu) if vcpu else EMPTY,
+            f"{_mb(ram)} / {hardware_utilities.format_memory(p_ram)}" if ram and p_ram else _mb(ram),
+            _mb(disk),
+        ])
 
         details.append(H(2, f"Cluster {cluster.name}"))
         details.append(KV([
@@ -362,8 +393,11 @@ def clusters(scope, opts):
             ("Mandant", cluster.tenant),
             ("Hosts", len(hosts)),
             ("VMs aktiv / gesamt", f"{active} / {len(vms)}"),
-            ("vCPU (Summe)", f"{vcpu:g}" if vcpu else None),
-            ("RAM (Summe)", _mb(ram) if ram else None),
+            ("Kerne / Threads (Hosts)", f"{p_cores} / {p_threads}" if p_cores else None),
+            ("RAM (Hosts)", hardware_utilities.format_memory(p_ram) if p_ram else None),
+            ("vCPU (Summe VMs)", num(vcpu) if vcpu else None),
+            ("vCPU je Kern", f"{num(round(float(vcpu) / p_cores, 1))} : 1" if vcpu and p_cores else None),
+            ("RAM (Summe VMs)", (_mb(ram) + ram_pct) if ram else None),
             ("Speicher (Summe)", _mb(disk) if disk else None),
             ("Beschreibung", cluster.description),
         ]))
@@ -372,19 +406,23 @@ def clusters(scope, opts):
             for host in hosts:
                 host_vms = [vm for vm in vms if vm.device_id == host.pk]
                 h_vcpu, h_ram, _h_disk = _vm_totals(host_vms)
+                h_cores, _t, h_pram = _host_resources([host])
                 rows.append([
                     host.name,
                     f"{host.device_type.manufacturer} {host.device_type.model}",
-                    get(host, "status"),
+                    hardware_utilities.cpu_text(host),
+                    hardware_utilities.format_memory(h_pram) if h_pram else None,
                     len(host_vms) if host_vms else EMPTY,
-                    f"{h_vcpu:g}" if h_vcpu else EMPTY,
-                    _mb(h_ram),
+                    (f"{num(h_vcpu)} ({num(round(float(h_vcpu) / h_cores, 1))} : 1)" if h_cores else num(h_vcpu)) if h_vcpu else EMPTY,
+                    (_mb(h_ram) + (f" ({round(h_ram / (h_pram * 1024) * 100)} %)" if h_pram else "")) if h_ram else EMPTY,
                 ])
-            details.append(T(["Host", "Hersteller / Modell", "Status", "VMs", "vCPU", "RAM"], rows))
+            details.append(T(["Host", "Hersteller / Modell", "CPU", "RAM", "VMs", "vCPU", "RAM VMs"], rows))
             if any(vm.device_id is None for vm in vms):
                 details.append(P("VMs ohne festen Host sind nur in den Cluster-Summen enthalten."))
 
-    blocks.append(T(["Cluster", "Typ", "Hosts", "VMs aktiv / gesamt", "vCPU", "RAM", "Speicher"], summary))
+    blocks.append(T(["Cluster", "Typ", "Hosts", "VMs aktiv / gesamt", "vCPU / Kerne", "RAM VMs / Hosts", "Speicher"], summary))
+    if hardware_utilities.is_installed():
+        blocks.append(P("Kerne und Host-RAM aus Netbox-Utilities (CPU & RAM). Verhältnis = zugewiesene vCPU je physischem Kern, Prozent = zugewiesener VM-RAM am physischen RAM."))
     return blocks + details
 
 
