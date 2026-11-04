@@ -315,6 +315,17 @@ def disks(scope, opts):
     return blocks if len(blocks) > 1 else _empty(opts, blocks)
 
 
+@section("floorplans", "Raumpläne", "Infrastruktur", default=False, hint="Aus NetBox-FloorPlan (falls installiert)")
+def floorplans(scope, opts):
+    from . import floorplan
+
+    blocks = [H(1, "Raumpläne")]
+    if not floorplan.is_installed():
+        return _empty(opts, blocks, "Keine Raumpläne erfasst.")
+    blocks += floorplan.floorplan_blocks(scope, opts)
+    return blocks if len(blocks) > 1 else _empty(opts, blocks, "Keine Raumpläne erfasst.")
+
+
 @section("power", "Stromversorgung", "Infrastruktur", default=False, hint="Power Panels & Feeds")
 def power(scope, opts):
     qs = scope.power_feeds().select_related("power_panel", "rack").order_by("power_panel__name", "name")

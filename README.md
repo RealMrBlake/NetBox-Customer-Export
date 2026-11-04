@@ -28,7 +28,7 @@ Before exporting, the technician selects which content the document contains:
 | Group | Content |
 |---|---|
 | General | Overview & site data (address, location tree, key figures), contacts |
-| Infrastructure | Racks by site → location with rack elevation (front/rear, optionally with device images as in NetBox) occupancy list and optional **rack photos** in an appendix, devices by **selectable device roles** (servers, switches, APs, routers …) with **selectable columns**, power, **virtualization clusters** with resources, VMs, **disks & RAID** from [Netbox-Utilities](https://git.mrblake.cc/MrBlake/Netbox-Utilities) (if installed) |
+| Infrastructure | Racks by site → location with rack elevation (front/rear, optionally with device images as in NetBox) occupancy list and optional **rack photos** in an appendix, devices by **selectable device roles** (servers, switches, APs, routers …) with **selectable columns**, power, **virtualization clusters** with resources, VMs, **disks & RAID** from [Netbox-Utilities](https://git.mrblake.cc/MrBlake/Netbox-Utilities) (if installed), **floor plans** from [NetBox-FloorPlan](https://git.mrblake.cc/MrBlake/NetBox-FloorPlan2.0) (if installed) |
 | Network | VRFs (incl. RTs), prefixes by VRF, VLANs, IP addresses (detailed), WLANs/SSIDs, circuits, **network topology** |
 | Contracts & licenses | Licenses from [NetBox-SLM](https://git.mrblake.cc/MrBlake/NetBox-SLM) (detected automatically) or another license plugin (e.g. `netbox-lifecycle`) |
 
@@ -304,6 +304,14 @@ failed disks, the RAID groups (level, count, usable capacity, fault tolerance) a
 slot, status, type, model, size, serial number, firmware, RAID group, optionally the install date, warranty and warnings (failed, warranty
 expired/expiring soon, too old – thresholds from the Utilities configuration). Removed disks (history) are not shown.
 Without the plugin the section stays empty.
+
+### Floor plans (NetBox-FloorPlan)
+
+If [NetBox-FloorPlan](https://git.mrblake.cc/MrBlake/NetBox-FloorPlan2.0) (`netbox_floorplanner`) is installed, the
+**Floor plans** section (off by default) shows every floor plan in scope (site, location, or – for tenants – plans of the
+tenant or containing its racks/devices) as a full-width drawing with room size, the background image (JPEG/PNG), and a
+table of the placed racks and devices. The plugin is optional and never imported directly; without it the section stays empty.
+For Word the drawing is converted with cairosvg, otherwise a simplified Pillow rendering is used.
 
 ### Rack photos
 
