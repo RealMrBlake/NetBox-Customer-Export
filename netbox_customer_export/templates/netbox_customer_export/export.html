@@ -1,6 +1,7 @@
 {% extends 'generic/_base.html' %}
+{% load i18n %}
 {% load form_helpers %}
-{% block title %}Kundendokumentation: {{ object }}{% endblock %}
+{% block title %}{% blocktrans %}Customer documentation: {{ object }}{% endblocktrans %}{% endblock %}
 {% block subtitle %}
   <div class="text-muted"><span class="badge text-bg-secondary">{{ scope.label }}</span> <a href="{{ object.get_absolute_url }}">{{ object }}</a></div>
 {% endblock %}
@@ -42,9 +43,9 @@
     {# --- links: Dokument --- #}
     <div class="col-xl-4">
       <div class="card">
-        <h2 class="card-header"><i class="mdi mdi-file-document-outline"></i> Dokument</h2>
+        <h2 class="card-header"><i class="mdi mdi-file-document-outline"></i> {% trans "Document" %}</h2>
         <div class="card-body">
-          <div class="ce-label mt-0">Format</div>
+          <div class="ce-label mt-0">{% trans "Format" %}</div>
           <div class="btn-group w-100 ce-format mb-3" role="group">
             {% for value, label in form.format.field.choices %}
               <input type="radio" class="btn-check" name="format" id="fmt-{{ value }}" value="{{ value }}" autocomplete="off"{% if form.format.value == value %} checked{% endif %}>
@@ -54,20 +55,20 @@
               </label>
             {% endfor %}
           </div>
-          <div class="mb-3"><label class="form-label" for="{{ form.title.id_for_label }}">Titel</label>{{ form.title }}</div>
-          <div class="mb-3"><label class="form-label" for="{{ form.subtitle.id_for_label }}">Untertitel</label>{{ form.subtitle }}</div>
-          <div class="mb-3"><label class="form-label" for="{{ form.author.id_for_label }}">Erstellt von</label>{{ form.author }}<div class="form-text">Leer = dein Benutzername</div></div>
+          <div class="mb-3"><label class="form-label" for="{{ form.title.id_for_label }}">{{ form.title.label }}</label>{{ form.title }}</div>
+          <div class="mb-3"><label class="form-label" for="{{ form.subtitle.id_for_label }}">{{ form.subtitle.label }}</label>{{ form.subtitle }}</div>
+          <div class="mb-3"><label class="form-label" for="{{ form.author.id_for_label }}">{{ form.author.label }}</label>{{ form.author }}<div class="form-text">{% trans "Empty = your user name" %}</div></div>
           {% if form.branding.field.choices|length > 1 %}
-            <div class="mb-3"><label class="form-label" for="{{ form.branding.id_for_label }}">Design / Firma</label>{{ form.branding }}</div>
+            <div class="mb-3"><label class="form-label" for="{{ form.branding.id_for_label }}">{{ form.branding.label }}</label>{{ form.branding }}</div>
           {% else %}
             <input type="hidden" name="branding" value="{{ form.branding.field.choices.0.0 }}">
           {% endif %}
 
-          <div class="ce-label">IP-Versionen</div>
+          <div class="ce-label">{{ form.ip_versions.label }}</div>
           {% include 'netbox_customer_export/_pills.html' with field=form.ip_versions %}
-          <div class="form-text mb-2">Gilt für Management-/OOB-IPs, VMs, Topologie, IP-Netze und IP-Adressen.</div>
+          <div class="form-text mb-2">{% trans "Applies to management/OOB IPs, VMs, topology, IP networks and IP addresses." %}</div>
 
-          <div class="ce-label">Optionen</div>
+          <div class="ce-label">{% trans "Options" %}</div>
           <label class="ce-switch">{{ form.include_empty }} {{ form.include_empty.label }}</label>
           {% if form.include_secrets %}
             <label class="ce-switch text-danger">{{ form.include_secrets }} {{ form.include_secrets.label }}</label>
@@ -79,13 +80,13 @@
     {# --- rechts: Inhalte + Detailoptionen --- #}
     <div class="col-xl-8">
       <div class="card">
-        <h2 class="card-header"><i class="mdi mdi-format-list-checks"></i> Inhalte</h2>
+        <h2 class="card-header"><i class="mdi mdi-format-list-checks"></i> {% trans "Contents" %}</h2>
         <div class="card-body">
           {% for group, sections in section_groups.items %}
             <div class="ce-group" data-ce-group>
               <div class="ce-group-head">
                 <h5>{{ group }}</h5>
-                <span><a data-ce-all>Alle</a> · <a data-ce-none>Keine</a></span>
+                <span><a data-ce-all>{% trans "All" %}</a> · <a data-ce-none>{% trans "None" %}</a></span>
               </div>
               <div class="ce-tiles">
                 {% for cb in form.sections %}{% for s in sections %}{% if s.key == cb.data.value %}
@@ -103,13 +104,13 @@
       <div class="row g-3 mt-0">
         <div class="col-lg-7">
           <div class="card ce-card h-100" data-ce-depends="devices">
-            <h2 class="card-header"><i class="mdi mdi-server-network"></i> Geräte</h2>
+            <h2 class="card-header"><i class="mdi mdi-server-network"></i> {% trans "Devices" %}</h2>
             <div class="card-body">
               <div data-ce-group>
-                <div class="ce-group-head"><h5>Geräterollen</h5><span><a data-ce-all>Alle</a> · <a data-ce-none>Keine</a></span></div>
+                <div class="ce-group-head"><h5>{{ form.roles.label }}</h5><span><a data-ce-all>{% trans "All" %}</a> · <a data-ce-none>{% trans "None" %}</a></span></div>
                 {% include 'netbox_customer_export/_pills.html' with field=form.roles %}
               </div>
-              <div class="ce-label">Spalten</div>
+              <div class="ce-label">{% trans "Columns" %}</div>
               {% include 'netbox_customer_export/_pills.html' with field=form.device_columns %}
               <label class="ce-switch mt-3">{{ form.group_by_site }} {{ form.group_by_site.label }}</label>
             </div>
@@ -117,13 +118,13 @@
         </div>
         <div class="col-lg-5">
           <div class="card ce-card h-100" data-ce-depends="racks">
-            <h2 class="card-header"><i class="mdi mdi-server"></i> Racks</h2>
+            <h2 class="card-header"><i class="mdi mdi-server"></i> {% trans "Racks" %}</h2>
             <div class="card-body">
-              <label class="ce-switch">{{ form.rack_svg }} Rack-Ansichten einbetten</label>
+              <label class="ce-switch">{{ form.rack_svg }} {% trans "Embed rack elevations" %}</label>
               <label class="ce-switch">{{ form.rack_images }} {{ form.rack_images.label }}</label>
-              <div class="ce-label">Seiten</div>
+              <div class="ce-label">{% trans "Faces" %}</div>
               {% include 'netbox_customer_export/_pills.html' with field=form.rack_faces %}
-              <div class="ce-label">Weiteres</div>
+              <div class="ce-label">{% trans "More" %}</div>
               <label class="ce-switch">{{ form.rack_devices }} {{ form.rack_devices.label }}</label>
               <label class="ce-switch">{{ form.rack_pagebreak }} {{ form.rack_pagebreak.label }}</label>
             </div>
@@ -131,7 +132,7 @@
         </div>
         <div class="col-lg-5">
           <div class="card ce-card h-100" data-ce-depends="disks">
-            <h2 class="card-header"><i class="mdi mdi-harddisk"></i> Datenträger</h2>
+            <h2 class="card-header"><i class="mdi mdi-harddisk"></i> {% trans "Disks" %}</h2>
             <div class="card-body">
               <label class="ce-switch">{{ form.disk_install_date }} {{ form.disk_install_date.label }}</label>
             </div>
@@ -139,17 +140,17 @@
         </div>
       </div>
       <div class="card ce-card mt-3" data-ce-depends="racks">
-          <h2 class="card-header"><i class="mdi mdi-image-multiple-outline"></i> Rack-Fotos</h2>
+          <h2 class="card-header"><i class="mdi mdi-image-multiple-outline"></i> {% trans "Rack photos" %}</h2>
           <div class="card-body">
             {% if not rack_photos %}
-              <div class="text-secondary">Keine Bildanhänge an Racks in diesem Scope gefunden. Fotos lassen sich am Rack über <em>Bild anhängen</em> hochladen.</div>
+              <div class="text-secondary">{% trans "No image attachments found on racks in this scope. Photos can be uploaded on the rack via <em>Attach an image</em>." %}</div>
             {% else %}
-            <div class="form-text mt-0 mb-3">Ausgewählte Fotos erscheinen im Anhang am Dokumentende, unter der jeweiligen Rack-Ansicht steht ein Verweis darauf.</div>
+            <div class="form-text mt-0 mb-3">{% trans "Selected photos appear in the appendix at the end of the document; a link to them is placed below the rack elevation." %}</div>
             {% for rack, atts in rack_photos %}
               <div class="ce-photo-rack" data-ce-group>
                 <div class="ce-group-head">
                   <h5>{{ rack.name }} <span class="fw-normal" style="text-transform: none">· {{ rack.site }}{% if rack.location %} / {{ rack.location }}{% endif %}</span></h5>
-                  <span><a data-ce-all>Alle</a> · <a data-ce-none>Keine</a></span>
+                  <span><a data-ce-all>{% trans "All" %}</a> · <a data-ce-none>{% trans "None" %}</a></span>
                 </div>
                 <div class="ce-photos">
                   {% for a in atts %}
@@ -167,18 +168,18 @@
         </div>
       <div class="card ce-card mt-3" data-ce-depends="topology">
         <h2 class="card-header d-flex justify-content-between align-items-center">
-          <span><i class="mdi mdi-sitemap"></i> Topologie</span>
+          <span><i class="mdi mdi-sitemap"></i> {% trans "Topology" %}</span>
           {% if perms.netbox_customer_export.view_topologysymbol %}
-            <a href="{% url 'plugins:netbox_customer_export:symbol_list' %}" class="btn btn-sm btn-outline-secondary" target="_blank"><i class="mdi mdi-shape-outline"></i> Symbole verwalten</a>
+            <a href="{% url 'plugins:netbox_customer_export:symbol_list' %}" class="btn btn-sm btn-outline-secondary" target="_blank"><i class="mdi mdi-shape-outline"></i> {% trans "Manage symbols" %}</a>
           {% endif %}
         </h2>
         <div class="card-body">
-          <div class="ce-label mt-0">Umfang</div>
+          <div class="ce-label mt-0">{{ form.topo_scope.label }}</div>
           {% include 'netbox_customer_export/_pills.html' with field=form.topo_scope %}
-          <div class="form-text mb-2">„Lokationsübersicht“ zeigt alle Lokationen eines Standorts und die Kabel zwischen ihnen, vom Serverraum bis zur letzten Unterverteilung. „Je Rack“ zeigt jedes Rack einzeln. Verbundene Geräte außerhalb erscheinen gestrichelt.</div>
-          <div class="ce-label">Beschriftung</div>
+          <div class="form-text mb-2">{% trans "“Location overview” shows all locations of a site and the cables between them, from the server room to the last sub-distribution. “Per rack” shows each rack separately. Connected devices outside appear dashed." %}</div>
+          <div class="ce-label">{{ form.topo_details.label }}</div>
           {% include 'netbox_customer_export/_pills.html' with field=form.topo_details %}
-          <div class="ce-label">Weiteres</div>
+          <div class="ce-label">{% trans "More" %}</div>
           <label class="ce-switch">{{ form.topo_external }} {{ form.topo_external.label }}</label>
           <label class="ce-switch">{{ form.topo_isolated }} {{ form.topo_isolated.label }}</label>
         </div>
@@ -187,8 +188,8 @@
   </div>
 
   <div class="ce-actions mt-3">
-    <a href="{{ object.get_absolute_url }}" class="btn btn-outline-secondary">Abbrechen</a>
-    <button class="btn btn-primary"><i class="mdi mdi-download"></i> Dokument erstellen</button>
+    <a href="{{ object.get_absolute_url }}" class="btn btn-outline-secondary">{% trans "Cancel" %}</a>
+    <button class="btn btn-primary"><i class="mdi mdi-download"></i> {% trans "Create document" %}</button>
   </div>
 </form>
 

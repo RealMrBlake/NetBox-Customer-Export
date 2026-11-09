@@ -1,5 +1,7 @@
 """Datenträger und RAID-Gruppen aus dem Plugin Netbox-Utilities (netbox_utilities.Disk)."""
 from django.apps import apps
+from django.utils.formats import date_format
+from django.utils.translation import gettext as _
 
 from .blocks import EMPTY, H, KV, T
 
@@ -23,7 +25,7 @@ def _helpers():
 
 
 def _date(value):
-    return value.strftime("%d.%m.%Y") if value else None
+    return date_format(value, "SHORT_DATE_FORMAT") if value else None
 
 
 def _slot(disk):
@@ -53,18 +55,18 @@ def disk_blocks(scope, opts):
         by_device.setdefault(disk.device, []).append(disk)
 
     show_installed = bool(opts.get("disk_install_date"))
-    headers = ["Steckplatz", "Status", "Datenträger", "Größe", "Seriennummer", "RAID"]
-    headers += ["Eingebaut"] * show_installed + ["Garantie bis", "Hinweise"]
+    headers = [_("Slot"), _("Status"), _("Disk"), _("Size"), _("Serial number"), "RAID"]
+    headers += [_("Installed")] * show_installed + [_("Warranty until"), _("Notes")]
     blocks = []
     for device, items in by_device.items():
         slots = sum(b.slot_count for b in DiskBayLayout.objects.filter(device=device))
         summary = helpers.disk_summary(items, slots)
         blocks.append(H(2, device.name or str(device)))
         blocks.append(KV([
-            ("Steckplätze belegt", f"{summary['used']} / {slots}" if slots else summary["used"]),
-            ("Rohkapazität", fmt(summary["raw_capacity_gb"])),
-            ("Hot Spares", summary["spares"]),
-            ("Defekt", summary["failed"]),
+            (_("Slots used"), f"{summary['used']} / {slots}" if slots else summary["used"]),
+            (_("Raw capacity"), fmt(summary["raw_capacity_gb"])),
+            (_("Hot spares"), summary["spares"]),
+            (_("Failed"), summary["failed"]),
         ]))
 
         groups = list(RAIDGroup.objects.filter(device=device).order_by("name"))
@@ -81,7 +83,7 @@ def disk_blocks(scope, opts):
                     tolerated if tolerated is not None else EMPTY,
                     group.description,
                 ])
-            blocks.append(T(["RAID-Gruppe", "Level", "Datenträger", "Nutzbar", "Ausfalltoleranz", "Beschreibung"], rows))
+            blocks.append(T([_("RAID group"), _("Level"), _("Disks"), _("Usable"), _("Fault tolerance"), _("Description")], rows))
 
         rows = []
         for d in items:

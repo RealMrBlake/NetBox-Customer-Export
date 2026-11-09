@@ -4,6 +4,9 @@ from collections import OrderedDict, defaultdict, deque
 from dataclasses import dataclass, field
 from io import BytesIO
 
+from django.utils.translation import gettext as _
+from django.utils.translation import ngettext
+
 from .symbols import KINDS, SymbolResolver, builtin_icon
 
 MAX_PER_ROW = 12  # breitere Zeilen werden umgebrochen
@@ -103,7 +106,7 @@ def build_graphs(scope, opts, per="site"):
     def context(d):
         """Untertitel eines externen Geräts: wo es steht."""
         if per == "rack":
-            return [f"Rack {d.rack}" if d.rack else str(d.site)]
+            return [_("Rack %(name)s") % {"name": d.rack} if d.rack else str(d.site)]
         return [str(d.site)]
 
     graphs = []
@@ -134,10 +137,10 @@ def build_graphs(scope, opts, per="site"):
         if nodes:
             _layout(nodes, edges)
             if per == "site":
-                title = f"Standort {group}"
+                title = _("Site %(name)s") % {"name": group}
             else:
                 where = " / ".join(str(x) for x in (group.site, group.location) if x)
-                title = f"Rack {group.name} ({where})"
+                title = _("Rack %(name)s (%(where)s)") % {"name": group.name, "where": where}
             graphs.append(Graph(title, nodes, edges))
     return graphs
 
@@ -290,8 +293,8 @@ def build_location_graphs(scope, opts):
         for loc in locations.values():
             sub = [str(loc.parent)] if loc.parent_id else []
             n_racks, n_dev = len(racks[loc.pk]), count[loc.pk]
-            parts = [f"{n_racks} Rack" + ("s" if n_racks != 1 else "")] if n_racks else []
-            parts.append(f"{n_dev} Gerät" + ("e" if n_dev != 1 else ""))
+            parts = [ngettext("%(n)d rack", "%(n)d racks", n_racks) % {"n": n_racks}] if n_racks else []
+            parts.append(ngettext("%(n)d device", "%(n)d devices", n_dev) % {"n": n_dev})
             sub.append(" · ".join(parts))
             nodes[f"l{loc.pk}"] = Node(f"l{loc.pk}", loc.name, "location", builtin_icon("location"), sub, tier=tier[loc.pk])
         members = set(nodes)
@@ -313,7 +316,7 @@ def build_location_graphs(scope, opts):
             nodes = OrderedDict((k, v) for k, v in nodes.items() if k in linked)
         if nodes:
             _layout(nodes, edges)
-            graphs.append(Graph(f"Standort {site}", nodes, edges))
+            graphs.append(Graph(_("Site %(name)s") % {"name": site}, nodes, edges))
     return graphs
 
 
@@ -321,7 +324,7 @@ def _cable_summary(cables):
     """„2× SMF, 4× CAT6a“ – Kabel ohne Typ zählen als „Kabel“."""
     types = defaultdict(int)
     for c in cables:
-        types[c.get_type_display() if c.type else "Kabel"] += 1
+        types[c.get_type_display() if c.type else _("Cable")] += 1
     return ", ".join(f"{n}× {t}" for t, n in sorted(types.items(), key=lambda x: -x[1]))
 
 

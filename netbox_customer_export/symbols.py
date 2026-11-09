@@ -4,36 +4,38 @@ from collections import OrderedDict
 from functools import lru_cache
 from io import BytesIO
 
+from django.utils.translation import gettext_lazy as _
+
 # Schlüssel -> (Bezeichnung, Ebene im Diagramm; kleiner = weiter oben)
 KINDS = OrderedDict(
     [
-        ("cloud", ("Internet / Provider", 0)),
-        ("location", ("Lokation / Verteiler", 3)),
-        ("modem", ("Modem / NTU / Medienkonverter", 1)),
-        ("firewall", ("Firewall", 1)),
-        ("router", ("Router", 1)),
-        ("l3switch", ("Layer-3-Switch / Core", 2)),
-        ("switch", ("Switch", 3)),
-        ("radio", ("Funkstrecke / Richtfunk", 3)),
-        ("patchpanel", ("Patchfeld / Rangierverteiler", 3)),
-        ("wlc", ("WLAN-Controller", 3)),
-        ("poe", ("PoE-Injektor", 4)),
-        ("ap", ("Access Point", 4)),
-        ("server", ("Server", 4)),
-        ("storage", ("Storage / SAN (MSA)", 4)),
-        ("nas", ("NAS", 4)),
-        ("tape", ("Bandlaufwerk / Tape Library", 4)),
-        ("ups", ("USV / ATS", 4)),
-        ("pbx", ("Telefonanlage", 4)),
-        ("phone", ("IP-Telefon", 4)),
-        ("pc", ("PC / Client", 4)),
-        ("printer", ("Drucker", 4)),
-        ("camera", ("Kamera", 4)),
-        ("generic", ("Sonstiges Gerät", 4)),
+        ("cloud", (_("Internet / provider"), 0)),
+        ("location", (_("Location / distribution"), 3)),
+        ("modem", (_("Modem / NTU / media converter"), 1)),
+        ("firewall", (_("Firewall"), 1)),
+        ("router", (_("Router"), 1)),
+        ("l3switch", (_("Layer 3 switch / core"), 2)),
+        ("switch", (_("Switch"), 3)),
+        ("radio", (_("Radio link / microwave"), 3)),
+        ("patchpanel", (_("Patch panel / distribution frame"), 3)),
+        ("wlc", (_("Wireless controller"), 3)),
+        ("poe", (_("PoE injector"), 4)),
+        ("ap", (_("Access point"), 4)),
+        ("server", (_("Server"), 4)),
+        ("storage", (_("Storage / SAN (MSA)"), 4)),
+        ("nas", (_("NAS"), 4)),
+        ("tape", (_("Tape drive / tape library"), 4)),
+        ("ups", (_("UPS / ATS"), 4)),
+        ("pbx", (_("Phone system (PBX)"), 4)),
+        ("phone", (_("IP phone"), 4)),
+        ("pc", (_("PC / client"), 4)),
+        ("printer", (_("Printer"), 4)),
+        ("camera", (_("Camera"), 4)),
+        ("generic", (_("Other device"), 4)),
     ]
 )
 HIDDEN = "hidden"
-KIND_CHOICES = [(k, v[0]) for k, v in KINDS.items() if k not in ("cloud", "location")] + [(HIDDEN, "In Topologie ausblenden")]
+KIND_CHOICES = [(k, v[0]) for k, v in KINDS.items() if k not in ("cloud", "location")] + [(HIDDEN, _("Hide in topology"))]
 
 # Reihenfolge wichtig: erster Treffer gewinnt. None = passiv, nicht zeichnen.
 # Tippvarianten („Acces Point“, „Controler“, „Libary“) sind absichtlich mit abgedeckt.

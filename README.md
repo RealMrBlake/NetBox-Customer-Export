@@ -38,8 +38,8 @@ document: management/OOB IPs, VMs, topology labels, prefixes and IP addresses.
 All queries respect NetBox permissions (`.restrict(user, "view")`) — a
 technician only exports what they are allowed to see.
 
-Open it via the **Customer doc** button on site, location, tenant and tenant
-group pages, or via **Plugins → Customer documentation**. Output formats:
+Open it via the **Customer Docs** button on site, location, tenant and tenant
+group pages, or via **Plugins → Customer Documentation**. Output formats:
 **PDF**, **Word** and **HTML preview** (opens in a new tab).
 
 ## Compatibility
@@ -47,6 +47,8 @@ group pages, or via **Plugins → Customer documentation**. Output formats:
 - NetBox `4.6.8` – `4.7.x`
 - Python `>=3.10`
 - System libraries for PDF and rack graphics in Word: Pango, Cairo
+- Languages: English and German. The interface and the exported documents follow
+  the language set in the user's NetBox preferences.
 
 ## Installation
 

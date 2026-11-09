@@ -4,6 +4,8 @@ from django.contrib.auth.mixins import PermissionRequiredMixin
 from django.http import HttpResponse
 from django.shortcuts import get_object_or_404, redirect, render
 from django.utils import timezone
+from django.utils.formats import date_format
+from django.utils.translation import gettext as _
 from django.views import View
 
 from .blocks import KV, P, T, Document, H
@@ -40,7 +42,7 @@ class BrandingEditView(PermissionRequiredMixin, View):
         form = BrandingProfileForm(request.POST, request.FILES, instance=obj)
         if form.is_valid():
             obj = form.save()
-            messages.success(request, f"Branding-Profil „{obj}“ gespeichert.")
+            messages.success(request, _("Branding profile “%(name)s” saved.") % {"name": obj})
             return redirect(f"plugins:{APP}:branding_list")
         return render(request, self.template_name, {"object": obj, "form": form})
 
@@ -58,7 +60,7 @@ class BrandingDeleteView(PermissionRequiredMixin, View):
             if f:
                 f.delete(save=False)
         obj.delete()
-        messages.success(request, f"Branding-Profil „{name}“ gelöscht.")
+        messages.success(request, _("Branding profile “%(name)s” deleted.") % {"name": name})
         return redirect(f"plugins:{APP}:branding_list")
 
 
@@ -70,24 +72,24 @@ class BrandingPreviewView(PermissionRequiredMixin, View):
     def get(self, request, pk):
         obj = get_object_or_404(BrandingProfile, pk=pk)
         blocks = [
-            H(1, "Übersicht"),
-            KV([("Standort", "Musterstandort"), ("Status", "Aktiv"), ("Anschrift", "Musterstraße 1\n12345 Musterstadt")]),
-            H(2, "Geräte"),
+            H(1, _("Overview")),
+            KV([(_("Site"), _("Sample site")), (_("Status"), _("Active")), (_("Address"), _("1 Sample Street\nSample City"))]),
+            H(2, _("Devices")),
             T(
-                ["Name", "Hersteller / Modell", "Rack / HE", "Management-IP"],
+                [_("Name"), _("Manufacturer / model"), _("Rack / U"), _("Management IP")],
                 [
-                    ["SW-CORE-01", "HPE Aruba 6100", "Rack A / HE 20", "10.0.0.2/24"],
-                    ["SW-ACC-01", "HPE Aruba 6000", "Rack A / HE 18", "10.0.0.3/24"],
-                    ["FW-01", "Sophos XGS 2100", "Rack A / HE 16", "10.0.0.1/24"],
+                    ["SW-CORE-01", "HPE Aruba 6100", _("Rack A / U %(u)s") % {"u": 20}, "10.0.0.2/24"],
+                    ["SW-ACC-01", "HPE Aruba 6000", _("Rack A / U %(u)s") % {"u": 18}, "10.0.0.3/24"],
+                    ["FW-01", "Sophos XGS 2100", _("Rack A / U %(u)s") % {"u": 16}, "10.0.0.1/24"],
                 ],
             ),
-            P("So sehen Überschriften, Tabellen und Fließtext mit diesem Profil aus."),
+            P(_("This is how headings, tables and body text look with this profile.")),
         ]
         doc = Document(
-            title="Netzwerkdokumentation Vorschau",
-            subtitle="Beispielkunde",
+            title=_("Network documentation preview"),
+            subtitle=_("Sample customer"),
             blocks=blocks,
-            meta={"author": request.user.username, "date": timezone.localtime().strftime("%d.%m.%Y")},
+            meta={"author": request.user.username, "date": date_format(timezone.localdate(), "SHORT_DATE_FORMAT")},
             branding=_normalize(obj.as_branding()),
         )
         return HttpResponse(render_html(doc), content_type="text/html; charset=utf-8")

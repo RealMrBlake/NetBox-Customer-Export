@@ -6,10 +6,10 @@ from netbox.plugins import get_plugin_config
 PLUGIN = "netbox_customer_export"
 
 DEFAULT_BRANDING = {
-    "name": "Standard",
+    "name": "Default",
     "company_name": "",
     "logo_path": None,
-    "footer_text": "Vertraulich – nur für den internen Gebrauch des Kunden",
+    "footer_text": "Confidential – for the customer's internal use only",
     "primary_color": "1F4E79",  # Überschriften, Tabellenköpfe
     "accent_color": "2E75B6",  # Unterüberschriften
     "header_text_color": "FFFFFF",  # Schrift im Tabellenkopf
@@ -31,7 +31,7 @@ def _normalize(profile):
     for key in COLOR_KEYS:
         value = str(profile[key]).lstrip("#")
         if not _HEX.match(value):
-            raise ValueError(f"netbox_customer_export: {key}={profile[key]!r} ist keine Hex-Farbe (z.B. '1F4E79')")
+            raise ValueError(f"netbox_customer_export: {key}={profile[key]!r} is not a hex colour (e.g. '1F4E79')")
         profile[key] = value.upper()
     return profile
 

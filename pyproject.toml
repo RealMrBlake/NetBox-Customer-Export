@@ -4,8 +4,8 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "netbox-customer-export"
-version = "0.16.0"
-description = "NetBox-Plugin: Kundendokumentation (PDF/Word) für Standorte, Lokationen, Mandanten und Mandantengruppen"
+version = "0.17.0"
+description = "NetBox plugin: customer documentation (PDF/Word) for sites, locations, tenants and tenant groups"
 readme = "README.md"
 requires-python = ">=3.10"
 license = { text = "Apache-2.0" }
@@ -20,4 +20,8 @@ all = ["weasyprint>=62", "python-docx>=1.1", "cairosvg>=2.7"]
 include = ["netbox_customer_export*"]
 
 [tool.setuptools.package-data]
-netbox_customer_export = ["templates/**/*.html"]
+netbox_customer_export = [
+    "templates/**/*.html",
+    "locale/*/LC_MESSAGES/*.po",
+    "locale/*/LC_MESSAGES/*.mo",
+]
