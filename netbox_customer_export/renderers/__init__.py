@@ -1,3 +1,6 @@
+from django.utils.translation import gettext as _
+
+
 class MissingDependency(Exception):
     pass
 
@@ -18,6 +21,6 @@ def render(doc, fmt, request=None):
     try:
         from weasyprint import HTML
     except (ImportError, OSError) as e:
-        raise MissingDependency(f"PDF-Export benötigt WeasyPrint (pip install weasyprint + Pango): {e}")
+        raise MissingDependency(_("PDF export requires WeasyPrint (pip install weasyprint + Pango): %(error)s") % {"error": e})
     base_url = request.build_absolute_uri("/") if request else None
     return HTML(string=html, base_url=base_url).write_pdf(), "application/pdf", "pdf"

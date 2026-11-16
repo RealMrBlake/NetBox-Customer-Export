@@ -1,5 +1,6 @@
 {% extends 'generic/_base.html' %}
-{% block title %}{% if object.pk %}{{ object }} bearbeiten{% else %}Neues Branding-Profil{% endif %}{% endblock %}
+{% load i18n %}
+{% block title %}{% if object.pk %}{% blocktrans %}Edit {{ object }}{% endblocktrans %}{% else %}{% trans "New branding profile" %}{% endif %}{% endblock %}
 {% block content %}
 <style>
   .ce-colors { display: grid; grid-template-columns: repeat(auto-fill, minmax(170px, 1fr)); gap: .75rem; }
@@ -14,7 +15,7 @@
   <div class="row g-3">
     <div class="col-lg-6">
       <div class="card h-100">
-        <h2 class="card-header"><i class="mdi mdi-domain"></i> Allgemein</h2>
+        <h2 class="card-header"><i class="mdi mdi-domain"></i> {% trans "General" %}</h2>
         <div class="card-body">
           {% include 'netbox_customer_export/_field.html' with field=form.name %}
           <div class="mb-3 d-flex gap-2 align-items-center">{{ form.is_default }} <label for="{{ form.is_default.id_for_label }}" class="m-0">{{ form.is_default.label }}</label>
@@ -23,7 +24,7 @@
           {% include 'netbox_customer_export/_field.html' with field=form.footer_text %}
           <div class="mb-3">
             <label class="form-label" for="{{ form.logo.id_for_label }}">{{ form.logo.label }}</label>
-            {% if object.logo %}<div class="mb-2"><img src="{{ object.logo.url }}" class="ce-logo-preview" alt="Aktuelles Logo"></div>{% endif %}
+            {% if object.logo %}<div class="mb-2"><img src="{{ object.logo.url }}" class="ce-logo-preview" alt="{% trans "Current logo" %}"></div>{% endif %}
             {{ form.logo }}
             <div class="form-text">{{ form.logo.help_text }}</div>
             {% for e in form.logo.errors %}<div class="text-danger small">{{ e }}</div>{% endfor %}
@@ -34,7 +35,7 @@
 
     <div class="col-lg-6">
       <div class="card h-100">
-        <h2 class="card-header"><i class="mdi mdi-palette"></i> Farben & Schrift</h2>
+        <h2 class="card-header"><i class="mdi mdi-palette"></i> {% trans "Colours & font" %}</h2>
         <div class="card-body">
           <div class="ce-colors mb-3">
             {% for field in form %}{% if field.name in 'primary_color accent_color header_text_color label_bg_color stripe_color' %}
@@ -73,9 +74,9 @@
   </div>
 
   <div class="d-flex justify-content-end gap-2 mt-3">
-    <a href="{% url 'plugins:netbox_customer_export:branding_list' %}" class="btn btn-outline-secondary">Abbrechen</a>
-    {% if object.pk %}<a href="{% url 'plugins:netbox_customer_export:branding_preview' pk=object.pk %}" target="_blank" class="btn btn-outline-primary"><i class="mdi mdi-eye"></i> Vorschau</a>{% endif %}
-    <button class="btn btn-primary"><i class="mdi mdi-content-save"></i> Speichern</button>
+    <a href="{% url 'plugins:netbox_customer_export:branding_list' %}" class="btn btn-outline-secondary">{% trans "Cancel" %}</a>
+    {% if object.pk %}<a href="{% url 'plugins:netbox_customer_export:branding_preview' pk=object.pk %}" target="_blank" class="btn btn-outline-primary"><i class="mdi mdi-eye"></i> {% trans "Preview" %}</a>{% endif %}
+    <button class="btn btn-primary"><i class="mdi mdi-content-save"></i> {% trans "Save" %}</button>
   </div>
 </form>
 {% endblock %}

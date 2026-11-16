@@ -12,6 +12,7 @@ from io import BytesIO
 from django.apps import apps
 from django.db.models import Q
 from django.utils.html import escape
+from django.utils.translation import gettext as _
 
 from .blocks import H, IMAGES, KV, P, T
 
@@ -242,11 +243,11 @@ def floorplan_blocks(scope, opts):
         blocks.append(
             KV(
                 [
-                    ("Standort", plan.site),
-                    ("Lokation", plan.location),
-                    ("Mandant", plan.tenant),
-                    ("Raumgröße", f"{meters(plan.width)} × {meters(plan.depth)} m"),
-                    ("Beschreibung", plan.description),
+                    (_("Site"), plan.site),
+                    (_("Location"), plan.location),
+                    (_("Tenant"), plan.tenant),
+                    (_("Room size"), f"{meters(plan.width)} × {meters(plan.depth)} m"),
+                    (_("Description"), plan.description),
                 ]
             )
         )
@@ -263,15 +264,15 @@ def floorplan_blocks(scope, opts):
         if svg or png:
             blocks.append(IMAGES([(svg, "", png)], wide=True))
         else:
-            blocks.append(P(f"Raumplan konnte nicht erzeugt werden: {error}"))
+            blocks.append(P(_("Floor plan could not be generated: %(error)s") % {"error": error}))
         placed = [i for i in items if i.rack_id or i.device_id]
         if placed and opts.get("floorplan_objects", True):
             rows = []
             for i in sorted(placed, key=lambda i: _text(i).lower()):
                 obj = i.rack or i.device
-                kind = "Rack" if i.rack_id else "Gerät"
+                kind = _("Rack") if i.rack_id else _("Device")
                 rows.append([obj.name or str(obj), kind, i.label if i.label and i.label != obj.name else None])
-            blocks.append(T(["Name", "Art", "Beschriftung im Plan"], rows))
+            blocks.append(T([_("Name"), _("Type"), _("Label in plan")], rows))
         if plan.comments:
             blocks.append(P(plan.comments))
     return blocks

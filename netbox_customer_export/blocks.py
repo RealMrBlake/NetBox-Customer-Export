@@ -3,6 +3,7 @@ import base64
 from dataclasses import dataclass, field
 
 from django.utils.text import slugify
+from django.utils.translation import gettext as _
 
 EMPTY = "—"
 
@@ -53,11 +54,11 @@ def REF(text, target, prefix=""):
 
 
 def T(headers, rows):
-    return Block("table", headers=list(headers), rows=[[fmt(c) for c in r] for r in rows])
+    return Block("table", headers=[str(h) for h in headers], rows=[[fmt(c) for c in r] for r in rows])
 
 
 def KV(pairs, skip_empty=True):
-    rows = [[k, fmt(v)] for k, v in pairs if not (skip_empty and v in (None, "", [], EMPTY))]
+    rows = [[str(k), fmt(v)] for k, v in pairs if not (skip_empty and v in (None, "", [], EMPTY))]
     return Block("kv", rows=rows)
 
 
@@ -91,7 +92,7 @@ def fmt(value):
     if value is None or value == "":
         return EMPTY
     if isinstance(value, bool):
-        return "Ja" if value else "Nein"
+        return _("Yes") if value else _("No")
     if isinstance(value, (list, tuple, set)) or hasattr(value, "all"):
         items = value.all() if hasattr(value, "all") else value
         return ", ".join(str(i) for i in items) or EMPTY

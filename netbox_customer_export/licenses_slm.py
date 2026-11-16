@@ -4,6 +4,9 @@ from itertools import groupby
 
 from django.apps import apps
 from django.db.models import Q
+from django.utils.formats import date_format
+from django.utils.translation import gettext as _
+from django.utils.translation import ngettext
 
 from .blocks import EMPTY, H, T
 
@@ -55,29 +58,37 @@ def licenses_for_scope(scope):
 def _validity(lic, today):
     """(Laufzeit-Text, Status-Text)."""
     if lic.lifetime:
-        return "unbefristet", "aktiv"
-    start = lic.start_date.strftime("%d.%m.%Y") if lic.start_date else ""
-    end = lic.expiration_date.strftime("%d.%m.%Y") if lic.expiration_date else ""
-    period = f"{start} – {end}" if start and end else (f"bis {end}" if end else (f"ab {start}" if start else EMPTY))
+        return _("unlimited"), _("active")
+    start = date_format(lic.start_date, "SHORT_DATE_FORMAT") if lic.start_date else ""
+    end = date_format(lic.expiration_date, "SHORT_DATE_FORMAT") if lic.expiration_date else ""
+    if start and end:
+        period = f"{start} – {end}"
+    elif end:
+        period = _("until %(date)s") % {"date": end}
+    elif start:
+        period = _("from %(date)s") % {"date": start}
+    else:
+        period = EMPTY
     if lic.renewal_interval and lic.renewal_interval_unit:
-        if lic.renewal_interval == 1:
-            every = {"days": "täglich", "months": "monatlich", "years": "jährlich"}.get(lic.renewal_interval_unit, "")
-        else:
-            unit = {"days": "Tage", "months": "Monate", "years": "Jahre"}.get(lic.renewal_interval_unit, lic.renewal_interval_unit)
-            every = f"alle {lic.renewal_interval} {unit}"
-        period += f" (Verlängerung {every})"
+        n = lic.renewal_interval
+        every = {
+            "days": ngettext("daily", "every %(n)d days", n),
+            "months": ngettext("monthly", "every %(n)d months", n),
+            "years": ngettext("yearly", "every %(n)d years", n),
+        }.get(lic.renewal_interval_unit, f"{n} {lic.renewal_interval_unit}")
+        period += " " + _("(renewal %(interval)s)") % {"interval": every % {"n": n}}
     if not lic.expiration_date:
-        return period, "aktiv"
+        return period, _("active")
     days = (lic.expiration_date - today).days
     if days < 0:
-        return period, "abgelaufen"
+        return period, _("expired")
     if days <= SOON_DAYS:
-        return period, f"läuft in {days} Tagen ab"
-    return period, "aktiv"
+        return period, ngettext("expires in %(days)d day", "expires in %(days)d days", days) % {"days": days}
+    return period, _("active")
 
 
 def _support(value):
-    return {True: "Ja", False: "Nein"}.get(value, EMPTY)
+    return {True: _("Yes"), False: _("No")}.get(value, EMPTY)
 
 
 def _installed_on(lic):
@@ -85,7 +96,7 @@ def _installed_on(lic):
     if not inst:
         return None
     target = inst.device or inst.virtualmachine or inst.cluster
-    kind = "Gerät" if inst.device_id else ("VM" if inst.virtualmachine_id else "Cluster")
+    kind = _("Device") if inst.device_id else (_("VM") if inst.virtualmachine_id else _("Cluster"))
     return f"{target} ({kind})" if target else None
 
 
@@ -96,9 +107,9 @@ def slm_blocks(scope, opts):
         return []
     today = date.today()
     show_key = bool(opts.get("include_secrets"))
-    headers = ["Lizenz", "Produkt / Version", "Typ", "Anzahl", "Laufzeit", "Status", "Support", "Installiert auf", "Mandant"]
+    headers = [_("License"), _("Product / version"), _("Type"), _("Quantity"), _("Term"), _("Status"), _("Support"), _("Installed on"), _("Tenant")]
     if show_key:
-        headers.append("Lizenzschlüssel")
+        headers.append(_("License key"))
 
     blocks = []
     by_manufacturer = sorted(qs, key=lambda lic: (str(lic.software_product.manufacturer or "~"), str(lic.software_product), lic.name))
@@ -121,6 +132,6 @@ def slm_blocks(scope, opts):
             if show_key:
                 row.append(lic.license_key)
             rows.append(row)
-        blocks.append(H(2, str(manufacturer) if manufacturer else "Ohne Hersteller"))
+        blocks.append(H(2, str(manufacturer) if manufacturer else _("No manufacturer")))
         blocks.append(T(headers, rows))
     return blocks

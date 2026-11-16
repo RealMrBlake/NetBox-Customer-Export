@@ -1,6 +1,7 @@
 {% extends 'generic/_base.html' %}
+{% load i18n %}
 {% load form_helpers %}
-{% block title %}{% if object.pk %}Symbol für {{ object }}{% else %}Neue Symbol-Zuordnung{% endif %}{% endblock %}
+{% block title %}{% if object.pk %}{% blocktrans %}Symbol for {{ object }}{% endblocktrans %}{% else %}{% trans "New symbol assignment" %}{% endif %}{% endblock %}
 {% block content %}
 <style>
   .ce-kinds { display: grid; grid-template-columns: repeat(auto-fill, minmax(118px, 1fr)); gap: .5rem; }
@@ -19,9 +20,9 @@
   <div class="row g-3">
     <div class="col-lg-4">
       <div class="card h-100">
-        <h2 class="card-header"><i class="mdi mdi-link-variant"></i> Gilt für</h2>
+        <h2 class="card-header"><i class="mdi mdi-link-variant"></i> {% trans "Applies to" %}</h2>
         <div class="card-body">
-          <p class="text-muted small">Entweder einen Gerätetyp <em>oder</em> eine Geräterolle wählen. Gerätetyp hat Vorrang.</p>
+          <p class="text-muted small">{% blocktrans trimmed %}Select either a device type <em>or</em> a device role. The device type takes precedence.{% endblocktrans %}</p>
           {% render_field form.device_type %}
           {% render_field form.role %}
         </div>
@@ -29,7 +30,7 @@
     </div>
     <div class="col-lg-8">
       <div class="card">
-        <h2 class="card-header"><i class="mdi mdi-shape-outline"></i> Symbol</h2>
+        <h2 class="card-header"><i class="mdi mdi-shape-outline"></i> {% trans "Symbol" %}</h2>
         <div class="card-body">
           <div class="ce-kinds mb-3">
             {% for radio in form.kind %}
@@ -44,12 +45,12 @@
           </div>
           {% for e in form.kind.errors %}<div class="text-danger small">{{ e }}</div>{% endfor %}
 
-          <label class="form-label" for="{{ form.icon.id_for_label }}">Eigenes Icon (optional)</label>
+          <label class="form-label" for="{{ form.icon.id_for_label }}">{% trans "Custom icon (optional)" %}</label>
           <div class="d-flex gap-3 align-items-start">
-            {% if object.icon %}<img src="{{ object.icon.url }}" class="ce-icon-preview" alt="Aktuelles Icon">{% endif %}
+            {% if object.icon %}<img src="{{ object.icon.url }}" class="ce-icon-preview" alt="{% trans "Current icon" %}">{% endif %}
             <div class="flex-grow-1">
               {{ form.icon }}
-              <div class="form-text">{{ form.icon.help_text }} Ist kein Symbol gewählt, bestimmt die Automatik die Ebene im Diagramm.</div>
+              <div class="form-text">{{ form.icon.help_text }} {% trans "If no symbol is selected, automatic detection determines the level in the diagram." %}</div>
               {% for e in form.icon.errors %}<div class="text-danger small">{{ e }}</div>{% endfor %}
             </div>
           </div>
@@ -58,8 +59,8 @@
     </div>
   </div>
   <div class="d-flex justify-content-end gap-2 mt-3">
-    <a href="{% url 'plugins:netbox_customer_export:symbol_list' %}" class="btn btn-outline-secondary">Abbrechen</a>
-    <button class="btn btn-primary"><i class="mdi mdi-content-save"></i> Speichern</button>
+    <a href="{% url 'plugins:netbox_customer_export:symbol_list' %}" class="btn btn-outline-secondary">{% trans "Cancel" %}</a>
+    <button class="btn btn-primary"><i class="mdi mdi-content-save"></i> {% trans "Save" %}</button>
   </div>
 </form>
 {% endblock %}

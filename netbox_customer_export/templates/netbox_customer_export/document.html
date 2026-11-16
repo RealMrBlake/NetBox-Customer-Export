@@ -1,5 +1,5 @@
-<!DOCTYPE html>
-<html lang="de">
+{% load i18n %}<!DOCTYPE html>
+{% get_current_language as LANGUAGE_CODE %}<html lang="{{ LANGUAGE_CODE }}">
 <head>
 <meta charset="utf-8">
 <title>{{ doc.title }}</title>
@@ -7,8 +7,8 @@
   :root { --primary: #{{ b.primary_color }}; --accent: #{{ b.accent_color }}; --head-text: #{{ b.header_text_color }}; --label-bg: #{{ b.label_bg_color }}; --stripe: #{{ b.stripe_color }}; }
   @page { size: A4; margin: 20mm 15mm 20mm 15mm;
     @bottom-left { content: element(footer); }
-    @bottom-right { content: "Seite " counter(page) " / " counter(pages); font-size: 7pt; color: #777; } }
-  /* Querformat: schmale Ränder, damit die Topologie möglichst groß wird */
+    @bottom-right { content: "{% filter escapejs %}{% trans "Page" %}{% endfilter %} " counter(page) " / " counter(pages); font-size: 7pt; color: #777; } }
+  /* Landscape: narrow margins so the topology gets as large as possible */
   @page landscape { size: A4 landscape; margin: 7mm 7mm 11mm 7mm; }
   @page cover { @bottom-left { content: none } @bottom-right { content: none } }
   body { font-family: "{{ b.font_family }}", "Segoe UI", "DejaVu Sans", Arial, sans-serif; font-size: {{ b.font_size }}pt; color: #222; }
@@ -66,13 +66,13 @@
   <h1>{{ doc.title }}</h1>
   {% if doc.subtitle %}<div class="subtitle">{{ doc.subtitle }}</div>{% endif %}
   <div class="meta">
-    Stand: {{ doc.meta.date }}<br>
-    Erstellt von: {{ doc.meta.author }}<br>
+    {% trans "As of" %}: {{ doc.meta.date }}<br>
+    {% trans "Created by" %}: {{ doc.meta.author }}<br>
     {{ b.company_name }}
   </div>
 </section>
 <nav class="toc">
-  <h2>Inhaltsverzeichnis</h2>
+  <h2>{% trans "Table of contents" %}</h2>
   {% for h in doc.toc %}<div class="l{{ h.level }}"><a href="#{{ h.anchor }}">{{ h.text }}</a></div>{% endfor %}
 </nav>
 {% for b in doc.blocks %}

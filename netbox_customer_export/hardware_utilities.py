@@ -1,5 +1,6 @@
 """CPU & RAM aus dem Plugin Netbox-Utilities (netbox_utilities.DeviceHardware)."""
 from django.apps import apps
+from django.utils.translation import gettext as _
 
 
 def is_installed():
@@ -38,7 +39,7 @@ def cpu_text(device):
     if not hw or not hw.cpu_id:
         return None
     cores, threads = cores_threads(hw)
-    return f"{hw.cpu_display}\n{cores} Kerne / {threads} Threads"
+    return f"{hw.cpu_display}\n" + _("%(cores)s cores / %(threads)s threads") % {"cores": cores, "threads": threads}
 
 
 def ram_text(device):

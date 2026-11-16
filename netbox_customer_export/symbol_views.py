@@ -4,6 +4,7 @@ from django.contrib.auth.mixins import LoginRequiredMixin, PermissionRequiredMix
 from django.http import Http404, HttpResponse
 from django.shortcuts import get_object_or_404, redirect, render
 from django.urls import reverse
+from django.utils.translation import gettext as _
 from django.views import View
 
 from .forms import TopologySymbolForm
@@ -75,7 +76,7 @@ class SymbolEditView(PermissionRequiredMixin, View):
         form = TopologySymbolForm(request.POST, request.FILES, instance=obj)
         if form.is_valid():
             obj = form.save()
-            messages.success(request, f"Topologie-Symbol für „{obj}“ gespeichert.")
+            messages.success(request, _("Topology symbol for “%(name)s” saved.") % {"name": obj})
             return redirect(f"plugins:{APP}:symbol_list")
         return self._render(request, obj, form)
 
@@ -92,5 +93,5 @@ class SymbolDeleteView(PermissionRequiredMixin, View):
         if obj.icon:
             obj.icon.delete(save=False)
         obj.delete()
-        messages.success(request, f"Topologie-Symbol für „{name}“ gelöscht – es gilt wieder die automatische Erkennung.")
+        messages.success(request, _("Topology symbol for “%(name)s” deleted – automatic detection applies again.") % {"name": name})
         return redirect(f"plugins:{APP}:symbol_list")
