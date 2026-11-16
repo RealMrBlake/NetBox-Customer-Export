@@ -79,6 +79,7 @@ class ExportForm(forms.Form):
         choices=(
             ("site", "Gesamtes Netzwerk (je Standort)"),
             ("locations", "Lokationsübersicht (Verbindungen zwischen Lokationen)"),
+            ("locations_all", "Lokationsübersicht standortübergreifend (alle Lokationen in einem Diagramm)"),
             ("rack", "Je Rack"),
         ),
         initial=["site"],

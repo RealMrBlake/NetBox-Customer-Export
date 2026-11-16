@@ -208,8 +208,11 @@ def _collect(scope, opts):
     return by_pk, drawn, links, external
 
 
-def build_location_graphs(scope, opts):
+def build_location_graphs(scope, opts, combined=False):
     """Lokationsübersicht: ein Graph je Standort, Knoten = Lokationen, Linien = Kabel zwischen Lokationen.
+
+    Mit `combined=True` entsteht ein einziger standortübergreifender Graph über alle Lokationen im Scope, an
+    jedem Knoten steht der Standort – so sieht man, wie Gebäude und ihre Lokationen untereinander verbunden sind.
 
     Gezählt werden physische Kabel (Interfaces, Front- und Rear-Ports), deren Enden in verschiedenen Lokationen
     liegen – typischerweise LWL-/Kupfer-Trunks vom Serverraum zu den Unterverteilungen. Lokationen mit
@@ -281,14 +284,17 @@ def build_location_graphs(scope, opts):
     sites = OrderedDict()
     all_locs = {}
     for d in devices:
-        sites.setdefault(d.site, OrderedDict())[d.location_id] = d.location
+        sites.setdefault(None if combined else d.site, OrderedDict())[d.location_id] = d.location
         all_locs[f"l{d.location_id}"] = d.location
 
     graphs = []
     for site, locations in sites.items():
         nodes = OrderedDict()
         for loc in locations.values():
-            sub = [str(loc.parent)] if loc.parent_id else []
+            where = [str(loc.site)] if combined else []
+            if loc.parent_id:
+                where.append(str(loc.parent))
+            sub = [" / ".join(where)] if where else []
             n_racks, n_dev = len(racks[loc.pk]), count[loc.pk]
             parts = [f"{n_racks} Rack" + ("s" if n_racks != 1 else "")] if n_racks else []
             parts.append(f"{n_dev} Gerät" + ("e" if n_dev != 1 else ""))
@@ -313,7 +319,7 @@ def build_location_graphs(scope, opts):
             nodes = OrderedDict((k, v) for k, v in nodes.items() if k in linked)
         if nodes:
             _layout(nodes, edges)
-            graphs.append(Graph(f"Standort {site}", nodes, edges))
+            graphs.append(Graph("Alle Standorte" if combined else f"Standort {site}", nodes, edges))
     return graphs
 
 

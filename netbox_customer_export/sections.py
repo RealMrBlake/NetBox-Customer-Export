@@ -612,6 +612,8 @@ def topology(scope, opts):
     if "locations" in scopes:
         locs = build_location_graphs(scope, opts)
         pages += [(([H(2, "Lokationsübersicht")] if i == 0 else []) + [H(3, g.title)], g) for i, g in enumerate(locs)]
+    if "locations_all" in scopes:
+        pages += [([H(2, "Standortübergreifende Lokationsübersicht")], g) for g in build_location_graphs(scope, opts, combined=True)]
     if "rack" in scopes:
         racks = build_graphs(scope, opts, per="rack")
         # Rack-Seiten unter einer gemeinsamen Zwischenüberschrift, Racks selbst eine Ebene tiefer (kürzeres Inhaltsverzeichnis)
