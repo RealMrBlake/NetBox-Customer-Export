@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "netbox-customer-export"
-version = "0.19.0"
+version = "0.19.1"
 description = "NetBox plugin: customer documentation (PDF/Word) for sites, locations, tenants and tenant groups"
 readme = "README.md"
 requires-python = ">=3.10"

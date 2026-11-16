@@ -6,7 +6,7 @@ class CustomerExportConfig(PluginConfig):
     name = "netbox_customer_export"
     verbose_name = _("Customer Export")
     description = _("Export customer documentation as PDF or Word")
-    version = "0.19.0"
+    version = "0.19.1"
     author = "Claude"
     base_url = "customer-export"
     min_version = "4.6.8"

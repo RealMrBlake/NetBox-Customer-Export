@@ -231,24 +231,30 @@ def build_location_graphs(scope, opts, combined=False):
 
     resolver = SymbolResolver()
     devices = list(
-        scope.devices().filter(location__isnull=False)
+        scope.devices()
         .select_related("role", "device_type__manufacturer", "site", "location__parent", "rack")
         .order_by("site__name", "location__name")
     )
     if not devices:
         return []
     by_pk = {d.pk: d for d in devices}
-    loc_of = {d.pk: d.location for d in devices}
+
+    def node_of(d):
+        """Lokation des Geräts – Geräte ohne Lokation (z.B. Richtfunk-APs am Dach) hängen am Standort selbst."""
+        return f"l{d.location_id}" if d.location_id else f"s{d.site_id}"
+
+    nid_of = {d.pk: node_of(d) for d in devices}
 
     # Ebene je Lokation = „höchstes“ Gerät darin (Firewall/Core oben, reine Verteiler darunter)
     tier, racks, count = {}, defaultdict(set), defaultdict(int)
     for d in devices:
         kind, _icon = resolver.resolve(d)
         t = KINDS.get(kind, ("", 3))[1] if kind else 3
-        tier[d.location_id] = min(tier.get(d.location_id, 9), t)
-        count[d.location_id] += 1
+        nid = nid_of[d.pk]
+        tier[nid] = min(tier.get(nid, 9), t)
+        count[nid] += 1
         if d.rack_id:
-            racks[d.location_id].add(d.rack_id)
+            racks[nid].add(d.rack_id)
 
     cables = {}  # ("c"|"w", pk) -> (Knoten a, Knoten b, Kabel oder WirelessLink)
     outside = {}  # node_id -> Node (andere Standorte / Provider)
@@ -266,12 +272,12 @@ def build_location_graphs(scope, opts, combined=False):
                 peers = port.link_peers or []
             except Exception:  # noqa: BLE001
                 continue
-            a = f"l{loc_of[port.device_id].pk}"
+            a = nid_of[port.device_id]
             for peer in peers:
                 peer_dev = getattr(peer, "device", None)
                 if peer_dev is not None:
                     if peer_dev.pk in by_pk:
-                        b = f"l{loc_of[peer_dev.pk].pk}"
+                        b = nid_of[peer_dev.pk]
                     elif not opts.get("topo_external"):
                         continue
                     else:
@@ -296,24 +302,31 @@ def build_location_graphs(scope, opts, combined=False):
         links[tuple(sorted((a, b)))].append(cable)
 
     sites = OrderedDict()
-    all_locs = {}
+    all_locs = {}  # node_id -> (Name, Standort)
     for d in devices:
-        sites.setdefault(None if combined else d.site, OrderedDict())[d.location_id] = d.location
-        all_locs[f"l{d.location_id}"] = d.location
+        nid = nid_of[d.pk]
+        sites.setdefault(None if combined else d.site, OrderedDict())[nid] = d
+        all_locs[nid] = (d.location.name if d.location_id else str(d.site), d.site)
 
     graphs = []
     for site, locations in sites.items():
         nodes = OrderedDict()
-        for loc in locations.values():
-            where = [str(loc.site)] if combined else []
-            if loc.parent_id:
-                where.append(str(loc.parent))
+        for nid, d in locations.items():
+            loc = d.location
+            if loc is not None:
+                name = loc.name
+                where = [str(loc.site)] if combined else []
+                if loc.parent_id:
+                    where.append(str(loc.parent))
+            else:
+                name = str(d.site)
+                where = [_("without location")]
             sub = [" / ".join(where)] if where else []
-            n_racks, n_dev = len(racks[loc.pk]), count[loc.pk]
+            n_racks, n_dev = len(racks[nid]), count[nid]
             parts = [ngettext("%(n)d rack", "%(n)d racks", n_racks) % {"n": n_racks}] if n_racks else []
             parts.append(ngettext("%(n)d device", "%(n)d devices", n_dev) % {"n": n_dev})
             sub.append(" · ".join(parts))
-            nodes[f"l{loc.pk}"] = Node(f"l{loc.pk}", loc.name, "location", builtin_icon("location"), sub, tier=tier[loc.pk])
+            nodes[nid] = Node(nid, name, "location", builtin_icon("location"), sub, tier=tier[nid])
         members = set(nodes)
         edges = []
         for (a, b), lst in links.items():
@@ -324,8 +337,8 @@ def build_location_graphs(scope, opts, combined=False):
                     continue
                 tpl = outside.get(nid)
                 if tpl is None:  # Lokation im Scope, aber an einem anderen Standort
-                    loc = all_locs[nid]
-                    tpl = Node(nid, loc.name, "location", builtin_icon("location"), [str(loc.site)], external=True)
+                    name, loc_site = all_locs[nid]
+                    tpl = Node(nid, name, "location", builtin_icon("location"), [str(loc_site)], external=True)
                 nodes[nid] = Node(**{**tpl.__dict__})
             edges.append(Edge(
                 a, b, [str(c) for c in lst], summary=_cable_summary(lst),
