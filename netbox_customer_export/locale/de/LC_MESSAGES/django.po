@@ -1534,10 +1534,20 @@ msgstr[0] "%(n)d Rack"
 msgstr[1] "%(n)d Racks"
 
 msgid "Cross-site location overview (all locations in one diagram)"
-msgstr "Lokationsübersicht standortübergreifend (alle Lokationen in einem Diagramm)"
+msgstr ""
+"Lokationsübersicht standortübergreifend (alle Lokationen in einem Diagramm)"
 
 msgid "Cross-site location overview"
 msgstr "Standortübergreifende Lokationsübersicht"
 
 msgid "All sites"
 msgstr "Alle Standorte"
+
+msgid "Wireless"
+msgstr "Funk"
+
+msgid "Export"
+msgstr "Export"
+
+msgid "Settings"
+msgstr "Einstellungen"

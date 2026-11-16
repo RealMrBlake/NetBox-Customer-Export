@@ -32,6 +32,7 @@ class Edge:
     b: str
     labels: list = field(default_factory=list)
     summary: str = ""  # feste Beschriftung statt Port-Namen (z.B. Lokationsübersicht)
+    wireless: bool = False  # nur Funkstrecken (WirelessLink) – blau gepunktet
 
 
 @dataclass
@@ -90,7 +91,7 @@ def build_graphs(scope, opts, per="site"):
     cache = getattr(scope, "_topology_cache", None)
     if cache is None:
         cache = scope._topology_cache = _collect(scope, opts)
-    by_pk, drawn, links, external = cache
+    by_pk, drawn, links, external, wireless = cache
 
     groups = OrderedDict()
     for pk in drawn:
@@ -130,7 +131,7 @@ def build_graphs(scope, opts, per="site"):
                         kind, icon = drawn[d.pk]
                         other = Node(nid, d.name or str(d), kind, icon, context(d), external=True)
                     nodes[nid] = Node(**{**other.__dict__})
-            edges.append(Edge(a, b, labels))
+            edges.append(Edge(a, b, labels, wireless=(a, b) in wireless))
         if not opts.get("topo_isolated"):
             linked = {n for e in edges for n in (e.a, e.b)}
             nodes = OrderedDict((k, v) for k, v in nodes.items() if k in linked)
@@ -148,6 +149,7 @@ def build_graphs(scope, opts, per="site"):
 def _collect(scope, opts):
     """Geräte, Symbole und Verbindungen (Kabelpfade) des Scopes einmalig einlesen."""
     from dcim.models import Interface
+    from django.db.models import Q
 
     resolver = SymbolResolver()
     devices = list(
@@ -162,11 +164,12 @@ def _collect(scope, opts):
             drawn[d.pk] = (kind, icon)
     by_pk = {d.pk: d for d in devices}
 
-    # Verbindungen: vollständige Kabelpfade (auch über Patchpanels) zwischen Interfaces
+    # Verbindungen: vollständige Kabelpfade (auch über Patchpanels) und Funkstrecken zwischen Interfaces
     links = defaultdict(list)  # (a, b) -> ["Gi1/0/1 – eth0", …]
+    kinds = defaultdict(set)  # (a, b) -> {"cable", "wireless"}
     external = {}  # node_id -> Node-Vorlage
     ifaces = scope.restrict(
-        Interface.objects.filter(device_id__in=list(drawn), cable__isnull=False)
+        Interface.objects.filter(Q(cable__isnull=False) | Q(wireless_link__isnull=False), device_id__in=list(drawn))
     ).select_related("device")
     for iface in ifaces:
         try:
@@ -207,8 +210,10 @@ def _collect(scope, opts):
                 label = " – ".join(reversed(label.split(" – ")))
             if label not in links[key]:
                 links[key].append(label)
+            kinds[key].add("cable" if iface.cable_id else "wireless")
 
-    return by_pk, drawn, links, external
+    wireless = {k for k, v in kinds.items() if v == {"wireless"}}
+    return by_pk, drawn, links, external, wireless
 
 
 def build_location_graphs(scope, opts, combined=False):
@@ -222,6 +227,7 @@ def build_location_graphs(scope, opts, combined=False):
     Firewall/Router/Core stehen oben, die Ebenen darunter folgen der Verkabelung.
     """
     from dcim.models import FrontPort, Interface, RearPort
+    from django.db.models import Q
 
     resolver = SymbolResolver()
     devices = list(
@@ -244,12 +250,17 @@ def build_location_graphs(scope, opts, combined=False):
         if d.rack_id:
             racks[d.location_id].add(d.rack_id)
 
-    cables = {}  # cable.pk -> (Knoten a, Knoten b, Kabel)
+    cables = {}  # ("c"|"w", pk) -> (Knoten a, Knoten b, Kabel oder WirelessLink)
     outside = {}  # node_id -> Node (andere Standorte / Provider)
     for model in (Interface, FrontPort, RearPort):
-        ports = scope.restrict(model.objects.filter(device_id__in=list(by_pk), cable__isnull=False)).select_related("cable")
+        cond = Q(cable__isnull=False)
+        if model is Interface:
+            cond |= Q(wireless_link__isnull=False)
+        ports = scope.restrict(model.objects.filter(cond, device_id__in=list(by_pk))).select_related("cable")
         for port in ports:
-            if port.cable_id in cables:
+            link = port.cable if port.cable_id else port.wireless_link
+            link_key = ("c", port.cable_id) if port.cable_id else ("w", port.wireless_link_id)
+            if link_key in cables:
                 continue
             try:
                 peers = port.link_peers or []
@@ -277,7 +288,7 @@ def build_location_graphs(scope, opts, combined=False):
                 else:
                     continue
                 if a != b:
-                    cables[port.cable_id] = (a, b, port.cable)
+                    cables[link_key] = (a, b, link)
                 break
 
     links = defaultdict(list)
@@ -316,7 +327,10 @@ def build_location_graphs(scope, opts, combined=False):
                     loc = all_locs[nid]
                     tpl = Node(nid, loc.name, "location", builtin_icon("location"), [str(loc.site)], external=True)
                 nodes[nid] = Node(**{**tpl.__dict__})
-            edges.append(Edge(a, b, [str(c) for c in lst], summary=_cable_summary(lst)))
+            edges.append(Edge(
+                a, b, [str(c) for c in lst], summary=_cable_summary(lst),
+                wireless=all(c._meta.model_name == "wirelesslink" for c in lst),
+            ))
         if not opts.get("topo_isolated"):
             linked = {n for e in edges for n in (e.a, e.b)}
             nodes = OrderedDict((k, v) for k, v in nodes.items() if k in linked)
@@ -328,10 +342,13 @@ def build_location_graphs(scope, opts, combined=False):
 
 
 def _cable_summary(cables):
-    """„2× SMF, 4× CAT6a“ – Kabel ohne Typ zählen als „Kabel“."""
+    """„2× SMF, 4× CAT6a, 1× Funk“ – Kabel ohne Typ zählen als „Kabel“, Funkstrecken als „Funk“."""
     types = defaultdict(int)
     for c in cables:
-        types[c.get_type_display() if c.type else _("Cable")] += 1
+        if c._meta.model_name == "wirelesslink":
+            types[_("Wireless")] += 1
+        else:
+            types[c.get_type_display() if c.type else _("Cable")] += 1
     return ", ".join(f"{n}× {t}" for t, n in sorted(types.items(), key=lambda x: -x[1]))
 
 
@@ -434,8 +451,12 @@ def _edge_text(graph, e, show_ports):
         return e.summary
     if show_ports:
         labels = _oriented(graph, e)
-        return labels[0] + (f" (+{len(labels) - 1})" if len(labels) > 1 else "")
-    return f"{len(e.labels)}×" if len(e.labels) > 1 else None
+        text = labels[0] + (f" (+{len(labels) - 1})" if len(labels) > 1 else "")
+        return f"{_('Wireless')}: {text}" if e.wireless else text
+    count = f"{len(e.labels)}×" if len(e.labels) > 1 else ""
+    if e.wireless:
+        return f"{count} {_('Wireless')}".strip()
+    return count or None
 
 
 # --- PNG ----------------------------------------------------------------------
@@ -445,6 +466,7 @@ PALETTE = [
     (23, 150, 170), (140, 86, 75), (188, 150, 20), (200, 80, 160), (90, 90, 90),
 ]
 EXTERNAL = (160, 160, 160)
+WIRELESS = (30, 136, 229)  # Funkstrecken: blau, gepunktet
 
 
 def _font(size, bold=False):
@@ -587,7 +609,8 @@ def render_png(graph, show_ports=False, scale=2):
                 line([(min(xs), ly), (max(xs), ly)], col, dashed=u.external)
             for c, e, ex, stack_pos in entries:
                 dashed = u.external or c.external
-                line([(ex, ly), (ex, c.y - 2)], EXTERNAL if dashed else col, w=3 if len(e.labels) > 1 else 2, dashed=dashed)
+                drop_col = WIRELESS if e.wireless else EXTERNAL if dashed else col
+                line([(ex, ly), (ex, c.y - 2)], drop_col, w=3 if len(e.labels) > 1 else 2, dashed=dashed or e.wireless)
                 if min(xs) < ex < max(xs):  # Abzweig auf der Schiene markieren
                     d.ellipse([(ex - 2.5) * S, (ly - 2.5) * S, (ex + 2.5) * S, (ly + 2.5) * S], fill=col)
                 text = _edge_text(graph, e, show_ports)
@@ -600,7 +623,8 @@ def render_png(graph, show_ports=False, scale=2):
             a, b = nodes[e.a], nodes[e.b]
             ly = gap["top"] + gap["lane_of"][("s", i)] * LANE
             dashed = a.external or b.external
-            line([(a.x, a.y - 2), (a.x, ly), (b.x, ly), (b.x, b.y - 2)], EXTERNAL if dashed else (70, 70, 70), dashed=dashed)
+            col = WIRELESS if e.wireless else EXTERNAL if dashed else (70, 70, 70)
+            line([(a.x, a.y - 2), (a.x, ly), (b.x, ly), (b.x, b.y - 2)], col, dashed=dashed or e.wireless)
             text = _edge_text(graph, e, show_ports)
             if text:
                 labels.append((text, (a.x + b.x) / 2, ly, "mm"))
@@ -612,7 +636,8 @@ def render_png(graph, show_ports=False, scale=2):
         left, right = (a, b) if a.x < b.x else (b, a)
         line(
             [(left.x + ICON / 2 + 4, cy), (right.x - ICON / 2 - 4, cy)],
-            EXTERNAL if dashed else (70, 70, 70), w=3 if len(e.labels) > 1 else 2, dashed=dashed,
+            WIRELESS if e.wireless else EXTERNAL if dashed else (70, 70, 70),
+            w=3 if len(e.labels) > 1 else 2, dashed=dashed or e.wireless,
         )
         text = _edge_text(graph, e, show_ports)
         if text:

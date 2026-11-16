@@ -1,7 +1,7 @@
 from django.utils.translation import gettext_lazy as _
-from netbox.plugins import PluginMenuButton, PluginMenuItem
+from netbox.plugins import PluginMenu, PluginMenuButton, PluginMenuItem
 
-menu_items = (
+_items = (
     PluginMenuItem(
         link="plugins:netbox_customer_export:select",
         link_text=_("Customer Documentation"),
@@ -33,4 +33,14 @@ menu_items = (
             ),
         ),
     ),
+)
+
+# Eigener Eintrag im obersten Navigationsmenü statt unter „Plugins“
+menu = PluginMenu(
+    label=_("Customer Export"),
+    groups=(
+        (_("Export"), _items[:1]),
+        (_("Settings"), _items[1:]),
+    ),
+    icon_class="mdi mdi-file-document-multiple-outline",
 )

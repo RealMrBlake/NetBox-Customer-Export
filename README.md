@@ -39,7 +39,7 @@ All queries respect NetBox permissions (`.restrict(user, "view")`) — a
 technician only exports what they are allowed to see.
 
 Open it via the **Customer Docs** button on site, location, tenant and tenant
-group pages, or via **Plugins → Customer Documentation**. Output formats:
+group pages, or via **Customer Export → Customer Documentation** in the main navigation. Output formats:
 **PDF**, **Word** and **HTML preview** (opens in a new tab).
 
 ## Compatibility
@@ -182,7 +182,7 @@ sudo systemctl restart netbox netbox-rq
 
 ### Branding in NetBox (recommended)
 
-Under **Plugins → Branding profiles**, admins create design profiles directly in NetBox:
+Under **Customer Export → Branding Profiles**, admins create design profiles directly in NetBox:
 
 - name, company name, footer and **logo upload** (PNG/JPG)
 - colours via colour picker: primary, accent, table header text, labels, zebra stripes
@@ -262,10 +262,11 @@ style of Cisco Packet Tracer:
 - The **cross-site location overview** puts all locations of all sites in scope into **one diagram**; each node shows its site (and parent location), so you can see how buildings and their locations are connected to each other.
 - Each topology gets its **own landscape page** (PDF and Word) and is scaled as large as possible.
 - Provider circuits appear as a cloud, devices of other sites dashed (can be disabled).
+- **Wireless links** (NetBox *Wireless links*, e.g. point-to-point radio bridges) appear as blue dotted lines labelled "Wireless", in the network view as well as in the location overviews.
 - Selectable labels: management IP, model, ports on links.
 - Device names longer than 15 characters are wrapped, preferably at `-`, `_`, `.` or spaces.
 
-**Symbols** (menu **Plugins → Topology symbols**, or the "Topology symbol"
+**Symbols** (menu **Customer Export → Topology Symbols**, or the "Topology symbol"
 button on device type and device role pages):
 
 1. per **device type**: choose a built-in symbol or **upload a custom icon** (PNG/JPG, ideally transparent)
